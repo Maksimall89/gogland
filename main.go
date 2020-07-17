@@ -21,7 +21,7 @@ func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
-	// webserver for herocu
+	// web server for heroku
 	http.HandleFunc("/", MainHandler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
