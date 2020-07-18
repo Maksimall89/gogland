@@ -14,7 +14,7 @@ func (conf *ConfigGameJSON) separateURL() {
 	conf.Gid = pathUrl[1]
 }
 
-func (conf *Config) init(path string) {
+func (conf *ConfigBot) init(path string) {
 
 	file, err := os.Open(path)
 	if err != nil {
@@ -35,7 +35,7 @@ func (conf *Config) init(path string) {
 	}
 }
 
-type Config struct {
+type ConfigBot struct {
 	TelegramBotToken string
 	OwnName          string
 	TestNickName     string
@@ -169,6 +169,7 @@ type SectorsStruct struct {
 	IsAnswered bool         //	отгадан / не отгадан interface{} //
 }
 
+// Ответы
 type AnswerStruct struct {
 	Answer         string `json:"Answer"`
 	AnswerDateTime struct {
@@ -177,7 +178,7 @@ type AnswerStruct struct {
 	Login       string `json:"Login"`
 	UserID      int    `json:"UserId"`
 	LocDateTime string `json:"LocDateTime"`
-} //`json:"Answer"`
+}
 
 // Информация о подсказках
 type HelpsStruct struct {

@@ -25,33 +25,35 @@ func main() {
 	http.HandleFunc("/", MainHandler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
-	var buffTextToChat string // тут хранится предыдущие сообщение отправленное в чат, для исключения дублей
-	var str string            // переменная для формирования строк
-	var pointer int           // pointer for search \n
+	var buffTextToChat string
+	var str string
+	var pointerStr int
 	var err error
 	var confJSON ConfigGameJSON
 
-	str = "log" // name folder for logs
-	// check what folder log is exist
-	_, err = os.Stat(str)
-	if os.IsNotExist(err) {
-		_ = os.MkdirAll(str, os.ModePerm)
+	if os.Getenv("Gogland_logs") == "1" {
+		str = "log" // name folder for logs
+		// check what folder log is exist
+		_, err = os.Stat(str)
+		if os.IsNotExist(err) {
+			_ = os.MkdirAll(str, os.ModePerm)
+		}
+
+		str = fmt.Sprintf("%s/%d-%02d-%02d-%02d-%02d-%02d-logFile.log", str, time.Now().Year(), time.Now().Month(), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), time.Now().Second())
+
+		// configurator for logger
+		// open a file
+		fileLog, err := os.OpenFile(str, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+		if err != nil {
+			fmt.Printf("Error opening file: %v", err)
+		}
+		defer fileLog.Close()
+		defer log.Println(recover())
+
+		// assign it to the standard logger
+		log.SetOutput(fileLog)
+		log.SetPrefix("Gogland ")
 	}
-
-	str = fmt.Sprintf("%s/%d-%02d-%02d-%02d-%02d-%02d-logFile.log", str, time.Now().Year(), time.Now().Month(), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), time.Now().Second())
-
-	// configurator for logger
-	// open a file
-	fileLog, err := os.OpenFile(str, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-	if err != nil {
-		fmt.Printf("Error opening file: %v", err)
-	}
-	defer fileLog.Close()
-	defer log.Println(recover())
-
-	// assign it to the standard logger
-	log.SetOutput(fileLog)
-	log.SetPrefix("iBot ")
 
 	// create chanel
 	webToBot := make(chan MessengerStyle, 100000) // chanel for send command in game and back information
@@ -94,7 +96,7 @@ func main() {
 	}
 
 	// read config file
-	var configuration Config
+	var configuration ConfigBot
 	configuration.init("config.json")
 
 	// configuration bot
@@ -147,13 +149,6 @@ func main() {
 			case "photo":
 				_, _ = bot.Send(tgbotapi.NewPhotoShare(chatId, msgChanel.ChannelMessage))
 			case "location":
-				/*
-					str = fmt.Sprintf(`<code>%g %g</code> <a href="https://maps.google.com/?q=%g,%g">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%g,%g">[Y]</a>`, msgChanel.Latitude, msgChanel.Longitude, msgChanel.Latitude, msgChanel.Longitude, msgChanel.Latitude, msgChanel.Longitude)
-					msg := tgbotapi.NewMessage(chatId, str)
-					msg.ParseMode = "HTML"
-					bot.Send(msg)
-					bot.Send(tgbotapi.NewLocation(chatId, msghanel.Latitude, msgChanel.Longitude))
-				*/
 				_, _ = bot.Send(tgbotapi.NewVenue(chatId, fmt.Sprintf(`%g %g`, msgChanel.Latitude, msgChanel.Longitude), "", msgChanel.Latitude, msgChanel.Longitude))
 			case "text":
 				msg = tgbotapi.NewMessage(chatId, msgChanel.ChannelMessage)
@@ -180,8 +175,8 @@ func main() {
 					log.Printf("Big massage. Len = %d", len(msg.Text))
 					buffTextToChat = msg.Text
 					for {
-						pointer = strings.LastIndex(buffTextToChat[0:4090], "\n")
-						msg.Text = buffTextToChat[0:pointer]
+						pointerStr = strings.LastIndex(buffTextToChat[0:4090], "\n")
+						msg.Text = buffTextToChat[0:pointerStr]
 						newMsg, err = bot.Send(msg)
 						if err != nil {
 							msg.ParseMode = "Markdown"
@@ -198,9 +193,8 @@ func main() {
 							}
 						}
 
-						buffTextToChat = buffTextToChat[pointer:]
+						buffTextToChat = buffTextToChat[pointerStr:]
 						if len(buffTextToChat) < 4091 {
-
 							msg.Text = buffTextToChat
 							_, err := bot.Send(msg)
 							if err != nil {
@@ -240,7 +234,6 @@ func main() {
 		select {
 		// В канал updates будут приходить все новые сообщения from telegram
 		case update = <-updates:
-			// fmt.Println("Chat id = %d, UserName = %s , Text = %s \n", update.Message.Chat.ID, update.Message.From.UserName, update.Message.Text)
 			if update.Message == nil {
 				continue
 			}
@@ -293,7 +286,6 @@ func main() {
 		case "restart":
 			if !isWork {
 				log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
-				// start go worker!
 				go workerJSON(confJSON, botToWeb, webToBot, &isWork)
 				defer close(botToWeb)
 				defer close(webToBot)
@@ -307,7 +299,6 @@ func main() {
 		case "start":
 			// set config can only owner
 			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
-
 				// split arg
 				args := strings.Split(update.Message.CommandArguments(), " ")
 
@@ -322,7 +313,6 @@ func main() {
 					break
 				}
 				// configuration game
-
 				confJSON.NickName = args[0]
 				confJSON.Password = args[1]
 				confJSON.URLGame = args[2]
@@ -334,7 +324,7 @@ func main() {
 				defer close(botToWeb)
 				defer close(webToBot)
 
-				str = "All change is applay JSON"
+				str = "All change is apply JSON"
 				msgBot.ChatId = update.Message.Chat.ID
 				isWork = true
 			} else {
@@ -384,7 +374,6 @@ func main() {
 					msg.ParseMode = "HTML"
 					_, _ = bot.Send(msg)
 				}()
-
 			} else {
 				str = "Игра ещё не началась."
 			}
@@ -432,7 +421,6 @@ func main() {
 					msg.ReplyToMessageID = update.Message.MessageID
 					_, _ = bot.Send(msg)
 				}()
-
 			} else {
 				str = "Игра ещё не началась."
 			}

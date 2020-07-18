@@ -10,11 +10,8 @@ import (
 	"strings"
 )
 
-// конвертация по https://planetcalc.ru/1129/
 func searchLocation(text string) map[string]float64 {
 	maps := make(map[string]float64)
-
-	// ((\d{2}[\.|°|,]+\d{1,8}(['|′|\.]\d{1,})*([.|″]\d)*["|″]*))[,|\w|\s|\n|<br\s*\/>|<BR\s*\/>]+((\d{2}[\.|°|,]+\d{1,8}(['|′|\.]\d{1,})*([.|″]\d)*["|″]*))
 	if reg, _ := regexp.MatchString(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`, text); reg {
 		re := regexp.MustCompile(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`)
 		s := re.FindAllString(text, -1)
@@ -26,7 +23,6 @@ func searchLocation(text string) map[string]float64 {
 
 		for i := 0; i < len(s); i++ {
 			// 40.167841 58.410761 or 40,167841 58,410761
-			// (\d{2}[\.|,]+\d{2,8})[,|\s|\n|\w|<br\s*/>|<BR\s*/>]+(\d{2}[\.|,]+\d{2,8})
 			if reg, _ := regexp.MatchString(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`, s[i]); reg {
 				sNew := regexp.MustCompile(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`).FindStringSubmatch(s[i])
 				maps["Latitude"+strconv.FormatInt(int64(counter), 10)], _ = strconv.ParseFloat(sNew[1], 64)
@@ -37,7 +33,6 @@ func searchLocation(text string) map[string]float64 {
 			}
 
 			//  56°50.683, 53°11.776
-			// (\d{2}°+\d{1,}\.+\d{1,8})[,|\s|\n|\w|<br\s*/>|<BR\s*/>]+(\d{2}°+\d{1,}\.+\d{1,8})
 			if reg, _ := regexp.MatchString(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`, s[i]); reg {
 				sNew := regexp.MustCompile(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`).FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
@@ -58,7 +53,6 @@ func searchLocation(text string) map[string]float64 {
 
 			// 40°15′08″ 58°26′23″
 			// 40°15′08 58°26′23
-			//	(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s|\n|\w|<br\s*/>|<BR\s*/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)
 			if reg, _ := regexp.MatchString(`(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s\n\w<brBR/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)`, s[i]); reg {
 				sNew := regexp.MustCompile(`(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s\n\w<brBR/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)`).FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
@@ -88,7 +82,6 @@ func searchLocation(text string) map[string]float64 {
 
 			// 59°24'48.6756" 58°24'38.7396"
 			// 59°24'48.6756 58°24'38.7396
-			// (\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s|\n|\w|<br\s*/>|<BR\s*/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*
 			if reg, _ := regexp.MatchString(`(\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*`, s[i]); reg {
 				sNew := regexp.MustCompile(`(\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*`).FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
@@ -117,7 +110,6 @@ func searchLocation(text string) map[string]float64 {
 			}
 
 			// 55°10'11"N 52°12'01"E
-			// (\d{2}°+\d{2,8}'+\d{2,}")[,|\s|\n|\w|<br\s*/>|<BR\s*/>]+(\d{2}°+\d{2}'+\d{2,}")
 			if reg, _ := regexp.MatchString(`(\d{2}°+\d{2,8}'+\d{2,}")[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2,}")`, s[i]); reg {
 
 				sNew := regexp.MustCompile(`(\d{2}°+\d{2,8}'+\d{2,}")[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2,}")`).FindStringSubmatch(s[i])
@@ -145,7 +137,6 @@ func searchLocation(text string) map[string]float64 {
 				counter++
 				continue
 			}
-
 		}
 	}
 	return maps
@@ -158,7 +149,7 @@ func sentLocation(locationMap map[string]float64, webToBot chan MessengerStyle) 
 
 	msgBot := MessengerStyle{}
 	msgBot.ChannelMessage = ""
-	//msgBot.MsgId = 1
+
 	for i := 0; i < len(locationMap)/2; i++ {
 		msgBot.Latitude = locationMap["Latitude"+strconv.FormatInt(int64(i), 10)]
 		msgBot.Longitude = locationMap["Longitude"+strconv.FormatInt(int64(i), 10)]
@@ -207,6 +198,10 @@ func replaceTag(str string, subUrl string) string {
 		<code>строчный моноширинный</code>
 		<pre>блочный моноширинный (можно писать код)</pre>
 	*/
+	if len(str) < 1 {
+		return ""
+	}
+
 	assumeHtmlTag := []string{"<b>", "</b>", "<code>", "</code>", "<pre>", "</pre>", "</a>"}
 
 	type pairStr struct {
@@ -237,17 +232,13 @@ func replaceTag(str string, subUrl string) string {
 		{`<\s*(sup|SUP)\s*>`, "^"},
 		{`<\s*(sub|SUB)\s*>`, "_"},
 		{`<\s*(small|SMALL)\s*>`, "^"},
-		//double
 		{`<b><b>`, "<b>"},
 		{`</b></b>`, "</b>"},
-		// link and image and iframe
 		{`<\s*(iframe|IFRAME).+?src="(?P<link>.+?)".*?<\/(iframe|IFRAME)>`, `[Вставлен iframe с другого сайта: <a href="${link}">${link}</a>]`},
 		{`<\s*(audio|AUDIO).+?src="(?P<link>.+?)".*?<\/(audio|AUDIO)>`, `[Вставлено audio с другого сайта: <a href="${link}">${link}</a>]`},
 		{`<\s*a\s*(?i)href\s*=\s*(?P<link>\"[^"]*\"|'[^']*'|[^'">\s]+).*?>(?P<titleLink>.+?)<\s*/\s*[a|A]\s*>`, `<a href=${link}>${titleLink}</a>`},
-
 		{`<\s*(?i)img.+?src="(?P<link>.+?)".*?>`, `[Картинка: <a href="${link}">${link}</a>]`},
 		{`<a href="(?P<link>.*?)".*?>\n*\[Картинка: (?P<titleLink>.+?)]\n*[<\/a>]*`, `[Спрятанная ссылка: <a href="${link}">${link}</a> под картинкой: ${titleLink}]`},
-
 		{`</a></a>`, `</a>`},
 		{`</a>]</a>`, `</a>]`},
 		{`(?i)<\s*img.+?src=(?P<link>.+?)>`, `[Картинка: <a href="${link}">${link}</a>]`},
@@ -276,6 +267,7 @@ func replaceTag(str string, subUrl string) string {
 		eval = false
 	}
 
+	var strArr []string
 	// add subUrl
 	if strings.Contains(str, "<a href=\"/") {
 		urlString := "\n<a href=\"http://" + subUrl + "/"
@@ -284,17 +276,16 @@ func replaceTag(str string, subUrl string) string {
 
 	// Coordinates
 	reg = regexp.MustCompile(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`)
-	coordinates := reg.FindAllString(str, -1)
-	for _, coordinate := range coordinates {
+	strArr = reg.FindAllString(str, -1)
+	for _, coordinate := range strArr {
 		finalCoordinates := searchLocation(coordinate)
-		newGeo := fmt.Sprintf(`[<a href=\"https://maps.google.com/?q=%f,%f\">[G]</a>] [<a href=\"https://yandex.ru/maps/?source=serp_navig&text=%f,%f\">[Y]</a>],`, finalCoordinates["Latitude0"], finalCoordinates["Longitude0"], finalCoordinates["Latitude0"], finalCoordinates["Longitude0"])
-		str = strings.Replace(str, coordinate, newGeo, -1)
+		str = strings.Replace(str, coordinate, fmt.Sprintf(`[<a href=\"https://maps.google.com/?q=%f,%f\">[G]</a>] [<a href=\"https://yandex.ru/maps/?source=serp_navig&text=%f,%f\">[Y]</a>],`, finalCoordinates["Latitude0"], finalCoordinates["Longitude0"], finalCoordinates["Latitude0"], finalCoordinates["Longitude0"]), -1)
 	}
 
 	// Convert Links
 	reg = regexp.MustCompile(`<a href="(.+?)"*>(.+?)</a>`)
-	links := reg.FindAllString(str, -1)
-	for _, link := range links {
+	strArr = reg.FindAllString(str, -1)
+	for _, link := range strArr {
 		newLink, err := convertUTF(link)
 		if err != nil {
 			log.Printf("Error URL conver =%s, Text=%s", err, str)
@@ -302,7 +293,6 @@ func replaceTag(str string, subUrl string) string {
 		}
 		str = strings.Replace(str, link, newLink, -1)
 	}
-
 	return str
 }
 func deleteMapFloat(maps map[string]float64) {

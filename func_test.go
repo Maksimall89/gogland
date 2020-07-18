@@ -12,7 +12,7 @@ import (
 )
 
 func (conf *ConfigGameJSON) initTest() {
-	var configuration Config
+	var configuration ConfigBot
 	configuration.init("config.json")
 
 	if os.Getenv("NickName") != "" {

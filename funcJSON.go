@@ -31,27 +31,19 @@ func enterGameJSON(client *http.Client, game ConfigGameJSON) string {
 	for counter = 0; counter < 3; counter++ {
 
 		resp, err := client.PostForm(fmt.Sprintf("http://%s/login/signin?json=1", game.SubUrl), url.Values{"Login": {game.NickName}, "Password": {game.Password}, "ddlNetwork": {"1"}})
-		//		resp, err := client.PostForm(fmt.Sprintf("http://%s/login/signin?json=1", game.SubUrl), url.Values{"Login": {game.NickName}, "Password": {game.Password}})
 		if err != nil || resp == nil {
-			//			log.Println(err)
 			continue
 		}
 		defer resp.Body.Close()
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			//			log.Println(err)
-			//			log.Println(string(body))
-			// Заход как обычно, чтобы не смущать систему :-)
 			client.PostForm(fmt.Sprintf("http://%s/Login.aspx?return=/GameDetails.aspx?gid=%s", game.SubUrl, game.Gid), url.Values{"socialAssign": {"0"}, "Login": {game.NickName}, "Password": {game.Password}, "EnButton1": {"Вход"}, "ddlNetwork": {"1"}})
 			continue
 		}
 
 		err = json.Unmarshal(body, bodyJSON)
 		if err != nil {
-			//			log.Println(err)
-			//			log.Println(string(body))
-			// Заход как обычно, чтобы не смущать систему :-)
 			client.PostForm(fmt.Sprintf("http://%s/Login.aspx?return=/GameDetails.aspx?gid=%s", game.SubUrl, game.Gid), url.Values{"socialAssign": {"0"}, "Login": {game.NickName}, "Password": {game.Password}, "EnButton1": {"Вход"}, "ddlNetwork": {"1"}})
 			continue
 		}
@@ -75,8 +67,6 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 	// 3 Попытки
 	for counter = 0; counter < 3; counter++ {
-
-		// GameEngines/Encounter/Play/{ID Игры}?json=1
 		resp, err := client.Get(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1", game.SubUrl, game.Gid))
 		if err != nil || resp == nil {
 			continue
@@ -85,8 +75,6 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			//			log.Println(err)
-			//			log.Println(string(body))
 			enterGameJSON(client, game)
 			continue
 		}
@@ -149,11 +137,6 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 			return
 		}
 	}
-
-	//	•	model.Level.IsPassed == false уровень  не пройден
-	//	•	model.Level.Dismissed == false уровень не снят
-	//	•Проверяем на какой уровень идёт отсылка кода, если уже следующий, то просто не отправляем его
-
 	// если получили ошибку... то снова пытаемся получить статус игры
 	if ModelState.Level.Number == 0 {
 		for {
@@ -162,18 +145,15 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 				break
 			}
 		}
-
 	}
 	if game.LevelNumber == ModelState.Level.Number && ModelState.Level.IsPassed == false && ModelState.Level.Dismissed == false {
 		var resp *http.Response
 		var err error
 		var errCounter int8
 		for errCounter = 0; errCounter < 5; errCounter++ {
-			// /GameEngines/Encounter/Play/{ID Игры}?json=1
 			if isBonus {
 				resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "BonusAction.Answer": {code}})
 			} else {
-				//model.Level.HasAnswerBlockRule == false ||  model.Level.BlockDuration <= 0 – активна блокировка воода ответов на задание (не действует для бонусных ответов)
 				if ModelState.Level.HasAnswerBlockRule == false || ModelState.Level.BlockDuration <= 0 {
 					resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "LevelAction.Answer": {code}})
 				} else {
@@ -223,9 +203,6 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 				continue
 			}
 
-			// null – ответа не было, false – неправильный ответ; true – правильный ответ;
-
-			// Если мы отправили бонус, то проверяем его или идем дальше
 			if isBonus {
 				if bodyJSON.EngineAction.BonusAction.IsCorrectAnswer == true {
 					msgBot.ChannelMessage = "Бонусный код &#9989;<b>ВЕРНЫЙ</b>"
@@ -257,7 +234,6 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 	msgBot.ChannelMessage = "&#9940;Превышено число попыток отправить код!\nПовторите ещё раз."
 	webToBot <- msgBot
 	return
-
 }
 
 func getPenaltyJSON(client *http.Client, game ConfigGameJSON, penaltyID int, webToBot chan MessengerStyle) {
@@ -392,7 +368,6 @@ func getLeftCodes(sectors []SectorsStruct, isNeed bool) (str string) {
 	} else {
 		str = "&#128269;На уровне 1 код.\n"
 	}
-
 	return str
 }
 func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) {
@@ -543,7 +518,6 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				sentLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 				//if text have img
 				sentPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
-				// САМ ТЕКСТ
 				//if text have location
 				sentLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
