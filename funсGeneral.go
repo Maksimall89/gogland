@@ -25,6 +25,9 @@ func searchLocation(text string) map[string]float64 {
 			// 40.167841 58.410761 or 40,167841 58,410761
 			if reg, _ := regexp.MatchString(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`, s[i]); reg {
 				sNew := regexp.MustCompile(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`).FindStringSubmatch(s[i])
+				sNew[1] = strings.ReplaceAll(sNew[1], ",", ".")
+				sNew[2] = strings.ReplaceAll(sNew[2], ",", ".")
+
 				maps["Latitude"+strconv.FormatInt(int64(counter), 10)], _ = strconv.ParseFloat(sNew[1], 64)
 				maps["Longitude"+strconv.FormatInt(int64(counter), 10)], _ = strconv.ParseFloat(sNew[2], 64)
 
@@ -34,6 +37,7 @@ func searchLocation(text string) map[string]float64 {
 
 			//  56°50.683, 53°11.776
 			if reg, _ := regexp.MatchString(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`, s[i]); reg {
+
 				sNew := regexp.MustCompile(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`).FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
 				buf2 := strings.Split(sNew[2], `°`)
@@ -279,7 +283,9 @@ func replaceTag(str string, subUrl string) string {
 	strArr = reg.FindAllString(str, -1)
 	for _, coordinate := range strArr {
 		finalCoordinates := searchLocation(coordinate)
-		str = strings.Replace(str, coordinate, fmt.Sprintf(`[<a href=\"https://maps.google.com/?q=%f,%f\">[G]</a>] [<a href=\"https://yandex.ru/maps/?source=serp_navig&text=%f,%f\">[Y]</a>],`, finalCoordinates["Latitude0"], finalCoordinates["Longitude0"], finalCoordinates["Latitude0"], finalCoordinates["Longitude0"]), -1)
+		for i := 0; i < len(finalCoordinates)/2; i++ {
+			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(`<code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>,`, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
+		}
 	}
 
 	// Convert Links

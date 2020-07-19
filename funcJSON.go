@@ -493,9 +493,9 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 			if helpNew.RemainSeconds != oldHelps[numberNew].RemainSeconds {
 				switch helpNew.RemainSeconds {
 				case 60:
-					msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d будет через 1 минуту.\n", StartString, helpNew.Number)
+					msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d через 1&#8419; минуту.\n", StartString, helpNew.Number)
 				case 300:
-					msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d будет через 5 минут.\n", StartString, helpNew.Number)
+					msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d через 5&#8419; минут.\n", StartString, helpNew.Number)
 				}
 				webToBot <- msgBot
 				msgBot.ChannelMessage = ""
@@ -541,9 +541,9 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 
 			switch helpNew.RemainSeconds {
 			case 60:
-				msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d будет через 1 минуту.\n", StartString, helpNew.Number)
+				msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d через 1&#8419; минуту.\n", StartString, helpNew.Number)
 			case 300:
-				msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d будет через 5 минут.\n", StartString, helpNew.Number)
+				msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d через 5&#8419; минут.\n", StartString, helpNew.Number)
 			}
 			webToBot <- msgBot
 		}
@@ -609,16 +609,16 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 				str := ""
 				switch bonusNew.SecondsToStart {
 				case 60:
-					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d будет доступен через 1 минуту.\n", bonusNew.Name, bonusNew.Number)
+					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
 				case 300:
-					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d будет доступен через 5 минут.\n", bonusNew.Name, bonusNew.Number)
+					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
 				}
 				// истечет через
 				switch bonusNew.SecondsLeft {
 				case 60:
-					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1 минуту.\n", bonusNew.Name, bonusNew.Number)
+					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
 				case 300:
-					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5 минут.\n", bonusNew.Name, bonusNew.Number)
+					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
@@ -647,16 +647,16 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 			str := ""
 			switch bonusNew.SecondsToStart {
 			case 60:
-				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d будет доступен через 1 минуту.\n", bonusNew.Name, bonusNew.Number)
+				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
 			case 300:
-				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d будет доступен через 5 минут.\n", bonusNew.Name, bonusNew.Number)
+				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
 			}
 			// истечет через
 			switch bonusNew.SecondsLeft {
 			case 60:
-				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1 минуту.\n", bonusNew.Name, bonusNew.Number)
+				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
 			case 300:
-				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5 минут.\n", bonusNew.Name, bonusNew.Number)
+				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
 			}
 			msgBot.ChannelMessage = str
 			webToBot <- msgBot

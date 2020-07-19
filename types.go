@@ -65,6 +65,11 @@ type ConfigGameJSON struct {
 	Prefix      string
 }
 
+type Coordinate struct {
+	Latitude  float64
+	Longitude float64
+}
+
 // Оценка текущего состояния игры
 type Model struct {
 	Event         int                `json:"Event"`      // Отражает в каком состоянии находится игра

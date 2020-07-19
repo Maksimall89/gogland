@@ -144,11 +144,13 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b"
 				msgBot.MsgId = msg.MsgId
 				webToBot <- msgBot
+				break
 			case "resume":
 				*isAnswerBlock = false
 				msgBot.ChannelMessage = "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause"
 				msgBot.MsgId = msg.MsgId
 				webToBot <- msgBot
+				break
 			case "stop":
 				msgBot.ChannelMessage = "<b>Бот выключен.</b> \nДля перезапуска используйте /restartj"
 				webToBot <- msgBot
@@ -163,7 +165,7 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 					}
 				} else {
 					if *isAnswerBlock == true {
-						if (msg.ChannelMessage[0:1] == "!") || (msg.ChannelMessage[0:1] == "/") || (msg.ChannelMessage[0:1] == "?") {
+						if (msg.ChannelMessage[0:1] == "!") || (msg.ChannelMessage[0:1] == "?") {
 							go sentCodeJSON(client, game, msg.ChannelMessage, false, webToBot, msg.MsgId)
 						} else {
 							msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume"
@@ -248,9 +250,9 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				if bufModel.Level.TimeoutSecondsRemain != modelGame.Level.TimeoutSecondsRemain {
 					switch modelGame.Level.TimeoutSecondsRemain {
 					case 60:
-						str += fmt.Sprintf("&#9200;До автоперехода <b>1 минута!</b>\n")
+						str += fmt.Sprintf("&#9200;До автоперехода 1&#8419;<b> минута!</b>\n")
 					case 300:
-						str += fmt.Sprintf("&#9200;До автоперехода <b>5 минут!</b>\n")
+						str += fmt.Sprintf("&#9200;До автоперехода 5&#8419;<b> минут!</b>\n")
 					}
 				}
 
