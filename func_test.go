@@ -16,26 +16,26 @@ func (conf *ConfigGameJSON) initTest() {
 	var configuration ConfigBot
 	configuration.init("config.json")
 
-	if os.Getenv("TestNickName") != "" {
-		conf.NickName = os.Getenv("TestNickName")
+	if value, exists := os.LookupEnv("TestNickName"); exists {
+		conf.NickName = value
 	} else {
 		conf.NickName = configuration.TestNickName
 	}
 
-	if os.Getenv("TestPassword") != "" {
-		conf.Password = os.Getenv("TestPassword")
+	if value, exists := os.LookupEnv("TestPassword"); exists {
+		conf.Password = value
 	} else {
 		conf.Password = configuration.TestPassword
 	}
 
-	if os.Getenv("TestURLGame") != "" {
-		conf.URLGame = os.Getenv("TestURLGame")
+	if value, exists := os.LookupEnv("TestURLGame"); exists {
+		conf.URLGame = value
 	} else {
 		conf.URLGame = configuration.TestURLGame
 	}
 
-	if os.Getenv("TestLevelNumber") != "" {
-		conf.LevelNumber, _ = strconv.ParseInt(os.Getenv("TestLevelNumber"), 10, 64)
+	if value, exists := os.LookupEnv("TestLevelNumber"); exists {
+		conf.LevelNumber, _ = strconv.ParseInt(value, 10, 64)
 	} else {
 		conf.LevelNumber = configuration.TestLevelNumber
 	}

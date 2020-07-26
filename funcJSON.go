@@ -12,7 +12,7 @@ import (
 
 func enterGameJSON(client *http.Client, game ConfigGameJSON) string {
 
-	type JSONenter struct {
+	type JSONEnter struct {
 		Error                int         `json:"Error"`
 		Message              string      `json:"Message"`
 		IPUnblockURL         interface{} `json:"IpUnblockUrl"`
@@ -26,7 +26,7 @@ func enterGameJSON(client *http.Client, game ConfigGameJSON) string {
 	msgBot.Type = "text"
 
 	var counter int8
-	bodyJSON := &JSONenter{}
+	bodyJSON := &JSONEnter{}
 
 	for counter = 0; counter < 3; counter++ {
 
