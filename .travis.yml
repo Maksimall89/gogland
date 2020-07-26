@@ -2,4 +2,4 @@ language: go
 go:
   - 1.14.x
 script:
-  - go test -v func_test.go
+  - go test -v
