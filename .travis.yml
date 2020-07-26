@@ -4,10 +4,3 @@ go:
 script:
 - go test -v
 - go build -v
-deploy:
-  provider: heroku
-  app: gogland
-  api_key:
-    secure: EKtgt++KvfPEOQnu6Ova7vkMJitB3oxHRjBReqt2BYmfjBVRQXxsTYjs/D2KSu39zyrnx5/4Dbw8QnoKd9rejmEkvDaMdOG9Qwk1QJS0ynEdbpvB0z1kE7xCFk26n/LJdlM5gzEZk1gZpDKYyTg7RV3dEJRjMo338qA1qKuRHGD8IGrxR681KVeqNl7MNY1lPEreH4ml+GQGExMqfT/NWZdvIGVOht7PO765OXoEMlsjVw1zBwQ0IKFgHzrAWfUGe+Ff9oM16AnQxlcpLbnFLvZlY5jZVxqNDjEQfeQBHTZf2G6qLFcX5iUFTKKnSObXNagv5++lKIDGNivKv5EWy2tgZ1yrxbkhnO/aEzb4JN80SSpthF7xnHx4fK29k8OvFg4/19d7hWBpTSZ+uxsrN+V4NHIRGx0eZQdu7ySxWz3Kf7ROQjy1kJUtasFM6m2lEjzh9K7YyvaKUqO/W+/7T9GnhOs2nrlA8EFX2I7W0EyYEKeWRdZjj3Ij/Mz7r1mxNuCPGjRUQdduwT1XD+K0CE/67LxyMry8eODW+hsMbTS3MpoRBcoQ0Tope+gg7X9Jtrnq3Nq86rv8C1fkeJgMGC4oLJdAfD8S9NXpdkL0SA0zegWpJk4iomD9okXFBG48ZNlapFNkwvHlkU+X3AfhYY/NLt40D8QUItN89JeXPmE=
-  on:
-    all_branches: true
