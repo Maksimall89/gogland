@@ -3,3 +3,9 @@ go:
   - 1.14.x
 script:
   - go test -v
+  - go build -v
+deploy:
+  provider: heroku
+  app: gogland
+  api_key:
+    secure: $Deploy_token

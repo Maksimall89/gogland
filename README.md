@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/Maksimall89/gogland.svg?branch=master)](https://travis-ci.com/Maksimall89/gogland)
 ### Info
 Бот telegram для игры в [http://en.cx](http://en.cx). Он умеет играть в схватку, точки, МШ в линейную или заданную последовательность.
 ### Сборка
