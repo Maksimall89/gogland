@@ -1,8 +1,8 @@
-module ibot/src
-
-require (
-	github.com/technoweenie/multipartstreamer v1.0.1
-	gopkg.in/telegram-bot-api.v4 v4.6.4
-)
+module gogland
 
 go 1.13
+
+require (
+	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
+	gopkg.in/telegram-bot-api.v4 v4.6.4
+)

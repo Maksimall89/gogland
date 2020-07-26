@@ -9,13 +9,16 @@ import (
 
 func (conf *ConfigGameJSON) separateURL() {
 	pathUrl := strings.Split(conf.URLGame, "/")
-	conf.SubUrl = pathUrl[2]
+	if len(pathUrl) > 1 {
+		conf.SubUrl = pathUrl[2]
+	}
 	pathUrl = strings.Split(conf.URLGame, "=")
-	conf.Gid = pathUrl[1]
+	if len(pathUrl) > 0 {
+		conf.Gid = pathUrl[1]
+	}
 }
 
 func (conf *ConfigBot) init(path string) {
-
 	file, err := os.Open(path)
 	if err != nil {
 		log.Println(err)
@@ -26,12 +29,11 @@ func (conf *ConfigBot) init(path string) {
 	if err != nil {
 		log.Println(err)
 	}
-
-	if os.Getenv("TelegramBotToken") != "" {
-		conf.TelegramBotToken = os.Getenv("TelegramBotToken")
+	if value, exists := os.LookupEnv("TelegramBotToken"); exists {
+		conf.TelegramBotToken = value
 	}
-	if os.Getenv("OwnName") != "" {
-		conf.OwnName = os.Getenv("OwnName")
+	if value, exists := os.LookupEnv("OwnName"); exists {
+		conf.OwnName = value
 	}
 }
 
