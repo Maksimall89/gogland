@@ -9,3 +9,5 @@ deploy:
   app: gogland
   api_key:
     secure: $Deploy_token
+  on:
+    all_branches: true
