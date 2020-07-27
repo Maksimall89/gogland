@@ -38,26 +38,24 @@ func anagram(text string) (string, error) {
 	}
 
 	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=" + text + "&answer_type=1")
-	//resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=" + text[5:] + "&answer_type=1")
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("Ошибка отправки запроса.")
+		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
 	}
-	defer resp.Body.Close()
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	if err != nil {
 		log.Println(string(body))
 		log.Println(err)
-		return "Не могу распарсить.", errors.New("Не могу распарсить.")
+		return "Не могу распарсить.", errors.New("не могу распарсить")
 	}
 
-	answer := AnswerPoncy{}
-	// срез байт входных, куда кладём
+	var answer AnswerPoncy // срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("Не могу распарсить JSON.")
+		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
 	}
 
 	var str string
@@ -85,26 +83,26 @@ func searchForMask(text string) (string, error) {
 	text = strings.Replace(text, "?", "*", 2)
 
 	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=words_by_mask_index&inword=" + text + "&answer_type=4")
-	//resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=words_by_mask_index&inword=" + text[7:] + "&answer_type=4")
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("Ошибка отправки запроса.")
+		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
 	}
-	defer resp.Body.Close()
+
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	if err != nil {
 		log.Println(string(body))
 		log.Println(err)
-		return "Не могу распарсить.", errors.New("Не могу распарсить.")
+		return "Не могу распарсить.", errors.New("не могу распарсить")
 	}
 
-	answer := AnswerPoncy{}
+	var answer AnswerPoncy
 	// срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("Не могу распарсить JSON")
+		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
 	}
 
 	var str string
@@ -122,7 +120,7 @@ func searchForMask(text string) (string, error) {
 	return str, nil
 }
 func associations(text string) (string, error) {
-	// type for http://sociation.org/
+
 	type ObjSocialistic struct {
 		Name              string  `json:"name"`
 		PopularityInverse int     `json:"popularity_inverse"`
@@ -144,26 +142,25 @@ func associations(text string) (string, error) {
 		Jar: cookieJar,
 	}
 	resp, err := client.PostForm("http://sociation.org/ajax/word_associations/", url.Values{"max_count": {"0"}, "back": {"false"}, "word": {text}})
-	//resp, err := client.PostForm("http://sociation.org/ajax/word_associations/", url.Values{"max_count": {"0"}, "back": {"false"}, "word": {text[5:]}})
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("Ошибка отправки запроса!")
+		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
 	}
-	defer resp.Body.Close()
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
+	_ = resp.Body.Close()
 	if err != nil {
 		log.Println(err)
 		log.Println(string(body))
-		return "Не могу распарсить.", errors.New("Не могу распарсить!")
+		return "Не могу распарсить.", errors.New("не могу распарсить")
 	}
 
-	answer := AnswerSocialistic{}
+	var answer AnswerSocialistic
 	// срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("Не могу распарсить JSON!")
+		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
 	}
 
 	var str string
@@ -183,13 +180,12 @@ func associations(text string) (string, error) {
 func tableMendeleev(text string) string {
 
 	var attributeSearch bool
-
 	type table struct {
 		name      string
 		shortName string
 		mass      string
 	}
-	// full version table http://console.aws.amazon.com/
+
 	var elements = []table{
 		{"-", "-", "-"},
 		{"H", "Водород", "1,00794"},
@@ -318,10 +314,9 @@ func tableMendeleev(text string) string {
 		{"Ubq", "Унбиквадий", "-"},
 		{"Ubp", "Унбипентий", "322"},
 		{"Ubh", "Унбигексий", "322"},
-		{"Ubs", "Унбисептий", "-"}, // 127
+		{"Ubs", "Унбисептий", "-"},
 	}
 
-	//	text = text[4:]
 	arrText := strings.Split(text, " ")
 	text = ""
 	for _, item := range arrText {
@@ -419,7 +414,6 @@ func morse(text string) string {
 		{"..-.-", "конец связи", "конец связи"},
 	}
 
-	// text = text[4:]
 	arrText := strings.Split(text, " ")
 	text = ""
 	for _, item := range arrText {
@@ -427,9 +421,9 @@ func morse(text string) string {
 			continue
 		}
 
-		for _, sybmol := range symbols {
-			if sybmol.name == item {
-				text += item + " = <b>RU</b> " + sybmol.rusSymbol + " <b>EN</b> " + sybmol.engSymbol + ";\n"
+		for _, symbol := range symbols {
+			if symbol.name == item {
+				text += item + " = <b>RU</b> " + symbol.rusSymbol + " <b>EN</b> " + symbol.engSymbol + ";\n"
 			}
 		}
 		if text == "" {
@@ -576,7 +570,6 @@ func autoCode(text string) string {
 		{"95", "Чеченская республика"},
 	}
 
-	//	text = text[3:]
 	arrText := strings.Split(text, " ")
 	text = ""
 
@@ -585,9 +578,9 @@ func autoCode(text string) string {
 			continue
 		}
 
-		for _, sybmol := range regions {
-			if sybmol.code == item {
-				text += "<b>" + item + "</b> регион = " + sybmol.region + ";\n"
+		for _, region := range regions {
+			if region.code == item {
+				text += "<b>" + item + "</b> регион = " + region.region + ";\n"
 			}
 		}
 		if text == "" {
@@ -746,7 +739,6 @@ func braille(text string) string {
 		{"010111", "-", "-", "Далее следует цифра"},
 	}
 
-	//text = text[4:]
 	arrText := strings.Split(text, " ")
 	text = ""
 	for _, item := range arrText {
@@ -754,9 +746,9 @@ func braille(text string) string {
 			continue
 		}
 
-		for _, sybmol := range symbols {
-			if sybmol.code == item {
-				text += item + " = <b>RU</b> " + sybmol.rusSymbol + " <b>EN</b> " + sybmol.engSymbol + " <b>№</b> " + sybmol.number + ";\n"
+		for _, symbol := range symbols {
+			if symbol.code == item {
+				text += item + " = <b>RU</b> " + symbol.rusSymbol + " <b>EN</b> " + symbol.engSymbol + " <b>№</b> " + symbol.number + ";\n"
 			}
 		}
 		if text == "" {
@@ -767,7 +759,6 @@ func braille(text string) string {
 	return text
 }
 func bin(text string, attribute bool) string {
-	//text = text[5:]
 	var t int
 	var d int
 
@@ -810,7 +801,6 @@ func bin(text string, attribute bool) string {
 					break
 				}
 			}
-
 		}
 	}
 
@@ -820,8 +810,6 @@ func transferToAlphabet(text string, types bool) string {
 
 	rusAlphabet := []string{"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
 	engAlphabet := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "-", "-", "-", "-", "-", "-"}
-
-	//text = text[5:]
 
 	if types {
 		arrText := strings.Split(text, " ")
@@ -928,7 +916,6 @@ func translateQwerty(text string) string {
 	}
 
 	return text
-
 }
 
 // TODO Шифр Цезаря
