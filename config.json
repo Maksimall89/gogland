@@ -2,7 +2,6 @@
   "TestNickName": "user",
   "TestPassword": "pass",
   "TestURLGame": "http://demo.en.cx/GameDetails.aspx?gid=1",
-  "TestLevelNumber": 0,
 
   "TelegramBotToken": "token",
   "OwnName": "nickOwn",

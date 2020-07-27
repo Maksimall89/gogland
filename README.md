@@ -12,8 +12,7 @@ go build -o gogland.exe
 ```json
   "TestNickName": "user",
   "TestPassword": "pass",
-  "TestURLGame": "http://demo.en.cx/GameDetails.aspx?gid=1",
-  "TestLevelNumber": 0
+  "TestURLGame": "http://demo.en.cx/GameDetails.aspx?gid=1"
 ```
 Или же установите переменные среды с этими же названиями. Приоритетным для сборки будут переменные среды.
 
