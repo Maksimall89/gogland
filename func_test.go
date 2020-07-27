@@ -424,7 +424,9 @@ func TestSentCodeJSON(t *testing.T) {
 	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
 
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
-	sentCodeJSON(clientTEST, confGameENJSON, code, false, webToBotTEST, 0)
+	var isBonus *bool
+	*isBonus = true
+	sentCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:

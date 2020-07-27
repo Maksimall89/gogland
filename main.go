@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"reflect"
 	"strings"
@@ -15,6 +16,10 @@ import (
 var bufModel Model
 var photoMap map[int]string
 var locationMap map[string]float64
+var cookieJar *cookiejar.Jar
+var client http.Client
+var isAnswerBlock bool
+var isWork bool
 
 func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 	_, _ = resp.Write([]byte("Hi there! I'm telegram bot @gogland_bot. My owner @maksimall89"))
@@ -129,7 +134,10 @@ func main() {
 	var newMsg tgbotapi.Message // style message from telegram
 	var msg tgbotapi.MessageConfig
 
-	isWork := false                        // state work bot
+	isAnswerBlock = false // pass for enter code
+	isWork = false        // state work bot
+	isBonus := new(bool)  // code bonus
+
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
 
 	// main cycle
@@ -283,9 +291,29 @@ func main() {
 			str = "Префикс принят"
 			break
 		case "b":
-			msgBot.ChannelMessage = "bonuscodes " + update.Message.CommandArguments()
-			msgBot.MsgId = update.Message.MessageID
-			botToWeb <- msgBot
+			if isWork && update.Message.Chat.ID == msgBot.ChatId {
+				*isBonus = true
+				str = ""
+				go sentCodeJSON(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
+			} else {
+				str = "Игра ещё не началась."
+			}
+			break
+		case "pause":
+			if isWork && update.Message.Chat.ID == msgBot.ChatId {
+				isAnswerBlock = true
+				str = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b"
+			} else {
+				str = "Игра ещё не началась."
+			}
+			break
+		case "resume":
+			if isWork && update.Message.Chat.ID == msgBot.ChatId {
+				isAnswerBlock = false
+				str = "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b"
+			} else {
+				str = "Игра ещё не началась."
+			}
 			break
 		case "getPenalty":
 			text := "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>"
@@ -300,7 +328,13 @@ func main() {
 		case "restart":
 			if !isWork {
 				log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
-				go workerJSON(confJSON, botToWeb, webToBot, &isWork)
+				// create cookie
+				cookieJar, _ = cookiejar.New(nil)
+				client = http.Client{
+					Jar: cookieJar,
+				}
+				// start go worker!
+				go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
 				defer close(botToWeb)
 				defer close(webToBot)
 
@@ -334,8 +368,13 @@ func main() {
 				confJSON.separateURL()
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 
+				// create cookie
+				cookieJar, _ = cookiejar.New(nil)
+				client = http.Client{
+					Jar: cookieJar,
+				}
 				// start go worker!
-				go workerJSON(confJSON, botToWeb, webToBot, &isWork)
+				go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
 				defer close(botToWeb)
 				defer close(webToBot)
 
@@ -632,24 +671,26 @@ func main() {
 			}()
 
 			if isWork && (update.Message.Chat.ID == msgBot.ChatId) {
-				// check  codes
-				if strings.HasPrefix(update.Message.Text, "!") || strings.HasPrefix(update.Message.Text, "?") {
-					msgBot.MsgId = update.Message.MessageID
-					msgBot.ChannelMessage = update.Message.Text
-					botToWeb <- msgBot
-					break
-				}
-
 				// WTF symbol what i need ignore
 				if strings.IndexAny(strings.ToLower(update.Message.Text), ":;/, '*+@#$%^&(){}[]|") != -1 {
 					break
 				}
 
-				// check english lang or number
-				if strings.IndexAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789") != -1 {
-					msgBot.MsgId = update.Message.MessageID
-					msgBot.ChannelMessage = update.Message.Text
-					botToWeb <- msgBot
+				// check  codes
+				if strings.HasPrefix(update.Message.Text, "!") || strings.HasPrefix(update.Message.Text, "?") || (strings.IndexAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789") != -1) {
+					*isBonus = false
+					if isAnswerBlock == true {
+						if (update.Message.Text[0:1] == "!") || (update.Message.Text[0:1] == "?") {
+
+							go sentCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
+						} else {
+							msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume"
+							msgBot.MsgId = update.Message.MessageID
+							webToBot <- msgBot
+						}
+					} else {
+						go sentCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
+					}
 					break
 				}
 			} else {

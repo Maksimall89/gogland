@@ -5,19 +5,15 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"net/http/cookiejar"
-	"strings"
 	"time"
 )
 
-func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan MessengerStyle, isWork *bool) string {
+func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan MessengerStyle, isWork *bool, isAnswerBlock *bool) string {
 
 	photoMap = make(map[int]string)
 	locationMap = make(map[string]float64)
 
 	isGameStart := false
-	isAnswerBlock := new(bool) // pass for enter code
-	*isAnswerBlock = false
 
 	var str string
 	var bufStr string
@@ -27,14 +23,8 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 	msgBot.Type = "text"
 	msgBot.MsgId = 0
 
-	// create cookie
-	cookieJar, _ := cookiejar.New(nil)
-	client := &http.Client{
-		Jar: cookieJar,
-	}
-
 	// Заходим в движок
-	msgBot.ChannelMessage = enterGameJSON(client, game)
+	msgBot.ChannelMessage = enterGameJSON(client, *game)
 	webToBot <- msgBot
 
 	// Получаем актуальное состояние игры
@@ -53,7 +43,7 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				return "Bot stop"
 			}
 		default:
-			modelGame = gameEngineModel(client, game)
+			modelGame = gameEngineModel(client, *game)
 			// что-то отсылаем если состояние игры изменилось лишь иначе идём на следующий круг
 			switch modelGame.Event {
 			case 0:
@@ -64,7 +54,7 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 					break
 				} else {
 					str = "Не смогу получить состояние игры..."
-					enterGameJSON(client, game)
+					enterGameJSON(client, *game)
 					break
 				}
 			case 1:
@@ -115,7 +105,7 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				str = "&#9940;Таймаут уровня!"
 			default:
 				str = "&#9940;Проблемы с игрой...."
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				break
 			}
 
@@ -136,50 +126,16 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 		select {
 		// В канал msg будут приходить все новые сообщения from telegram
 		case msg := <-botToWeb:
-			//  если игра ещё не стартанула, то просто обнуляем все сообщения в канале, ибо нефиг :-)
-			msgBot.MsgId = 0 // clear replay
-			switch msg.ChannelMessage {
-			case "pause":
-				*isAnswerBlock = true
-				msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b"
-				msgBot.MsgId = msg.MsgId
-				webToBot <- msgBot
-				break
-			case "resume":
-				*isAnswerBlock = false
-				msgBot.ChannelMessage = "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause"
-				msgBot.MsgId = msg.MsgId
-				webToBot <- msgBot
-				break
-			case "stop":
-				msgBot.ChannelMessage = "<b>Бот выключен.</b> \nДля перезапуска используйте /restartj"
+			if msg.ChannelMessage == "stop" {
+				msgBot.ChannelMessage = "<b>Бот выключен.</b> \nДля перезапуска используйте /restart"
+				msgBot.MsgId = 0 // clear replay
 				webToBot <- msgBot
 				*isWork = false
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return "Bot stop"
-			default:
-				//sent code
-				if strings.Contains(msg.ChannelMessage, "bonuscodes") {
-					if len(msg.ChannelMessage) > 11 {
-						go sentCodeJSON(client, game, msg.ChannelMessage[11:], false, webToBot, msg.MsgId)
-					}
-				} else {
-					if *isAnswerBlock == true {
-						if (msg.ChannelMessage[0:1] == "!") || (msg.ChannelMessage[0:1] == "?") {
-							go sentCodeJSON(client, game, msg.ChannelMessage, false, webToBot, msg.MsgId)
-						} else {
-							msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume"
-							msgBot.MsgId = msg.MsgId
-							webToBot <- msgBot
-						}
-					} else {
-						go sentCodeJSON(client, game, msg.ChannelMessage, false, webToBot, msg.MsgId)
-					}
-				}
 			}
-			//if I don't have a msg
 		default:
-			modelGame = gameEngineModel(client, game)
+			modelGame = gameEngineModel(client, *game)
 
 			// Проверка на конец игры
 			if modelGame.Event == 6 || modelGame.Event == 17 {
@@ -192,7 +148,7 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 
 			// если мы не на уровне или что-то пошло не так
 			if modelGame.Event != 0 && modelGame.GameId == 0 || modelGame.Level.Number == 0 {
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
@@ -212,26 +168,26 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				str += getFirstSector(modelGame.Level)
 				// Ограничение на ввод
 				if modelGame.Level.HasAnswerBlockRule {
-					str += fmt.Sprintf("&#10071;<b>Ограничение на ввод!</b>\nПриём кодов <b>приостановлен</b>.\nУ вас %d попыток на ", modelGame.Level.AttemtsNumber)
+					str += fmt.Sprintf("\n&#10071;<b>Ограничение на ввод!</b>\nПриём кодов <b>приостановлен</b>.\nУ вас %d попыток на ", modelGame.Level.AttemtsNumber)
 					// блокировка установлена для: 0,1 – для игрока; 2 – для команды
 					if modelGame.Level.BlockTargetId == 2 {
 						str += "команду"
 					} else {
 						str += "игрока"
 					}
-					str += fmt.Sprintf("за %s\nДля возобновления наберите /resume\nЧтобы отправить бонусные коды введите: /b<code>код</code>", convertTimeSec(modelGame.Level.AttemtsPeriod))
+					str += fmt.Sprintf("за %s\nДля возобновления наберите /resume\nЧтобы отправить бонусные коды введите: /b <code>код</code>\n\n", convertTimeSec(modelGame.Level.AttemtsPeriod))
 					*isAnswerBlock = true
 				}
 				// Сообщения
-				str += getFirstMessages(modelGame.Level.Messages, game)
+				str += getFirstMessages(modelGame.Level.Messages, *game)
 				//  Задание
-				str += getFirstTask(modelGame.Level.Tasks, game)
+				str += getFirstTask(modelGame.Level.Tasks, *game)
 				// Подсказки
-				str += getFirstHelps(modelGame.Level.Helps, game)
+				str += getFirstHelps(modelGame.Level.Helps, *game)
 				// Штрафные подсказки
-				str += getFirstHelps(modelGame.Level.PenaltyHelps, game)
+				str += getFirstHelps(modelGame.Level.PenaltyHelps, *game)
 				//  Бонусы
-				str += getFirstBonuses(modelGame.Level.Bonuses, game)
+				str += getFirstBonuses(modelGame.Level.Bonuses, *game)
 				//  sent message
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
@@ -270,15 +226,15 @@ func workerJSON(game ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan
 				webToBot <- msgBot
 
 				// Сообщения
-				compareMessages(modelGame.Level.Messages, bufModel.Level.Messages, game, webToBot)
+				compareMessages(modelGame.Level.Messages, bufModel.Level.Messages, *game, webToBot)
 				//  Задание
-				compareTasks(modelGame.Level.Tasks, bufModel.Level.Tasks, game, webToBot)
+				compareTasks(modelGame.Level.Tasks, bufModel.Level.Tasks, *game, webToBot)
 				//  Подсказки
-				compareHelps(modelGame.Level.Helps, bufModel.Level.Helps, game, webToBot)
+				compareHelps(modelGame.Level.Helps, bufModel.Level.Helps, *game, webToBot)
 				//  Штрафные подсказки
-				compareHelps(modelGame.Level.PenaltyHelps, bufModel.Level.PenaltyHelps, game, webToBot)
+				compareHelps(modelGame.Level.PenaltyHelps, bufModel.Level.PenaltyHelps, *game, webToBot)
 				//  Бонусы
-				compareBonuses(modelGame.Level.Bonuses, bufModel.Level.Bonuses, game, webToBot)
+				compareBonuses(modelGame.Level.Bonuses, bufModel.Level.Bonuses, *game, webToBot)
 			}
 
 			// копируем всё в буфер

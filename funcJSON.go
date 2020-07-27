@@ -96,7 +96,7 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 	return Model{}
 }
-func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus bool, webToBot chan MessengerStyle, MsgId int) {
+func sentCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonus *bool, webToBot chan MessengerStyle, MsgId int) {
 	var msgBot MessengerStyle
 	msgBot.MsgId = MsgId
 	msgBot.Type = "text"
@@ -127,7 +127,7 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 		}
 	}
 	// Получаем текущие состояние игры
-	ModelState := gameEngineModel(client, game)
+	ModelState := gameEngineModel(client, *game)
 
 	// Проверяем на дубль
 	for _, LevelInfo := range ModelState.Level.MixedActions {
@@ -140,7 +140,7 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 	// если получили ошибку... то снова пытаемся получить статус игры
 	if ModelState.Level.Number == 0 {
 		for {
-			ModelState = gameEngineModel(client, game)
+			ModelState = gameEngineModel(client, *game)
 			if ModelState.Level.Number != 0 {
 				break
 			}
@@ -151,13 +151,13 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 		var err error
 		var errCounter int8
 		for errCounter = 0; errCounter < 5; errCounter++ {
-			if isBonus {
+			if *isBonus {
 				resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "BonusAction.Answer": {code}})
 			} else {
 				if ModelState.Level.HasAnswerBlockRule == false || ModelState.Level.BlockDuration <= 0 {
 					resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "LevelAction.Answer": {code}})
 				} else {
-					msgBot.ChannelMessage = fmt.Sprintf("&#128219;<b>Ограничение на ввод.</b>\nЯ не смог отправить код&#128546;\nВы сможете ввести код через %d", ModelState.Level.BlockDuration)
+					msgBot.ChannelMessage = fmt.Sprintf("&#128219;<b>Ограничение на ввод.</b>\nЯ не смог отправить код&#128546;\nВы сможете ввести код через %s", convertTimeSec(ModelState.Level.BlockDuration))
 					webToBot <- msgBot
 					return
 				}
@@ -166,7 +166,7 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 			if err != nil || resp == nil {
 				log.Println("Ошибка при отправке кода 1.")
 				log.Println(err)
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
@@ -178,12 +178,12 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 				log.Println("Ошибка при отправке кода 2.")
 				log.Println(string(body))
 				log.Println(err)
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
 			if strings.Contains(string(body), `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">`) {
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
@@ -192,18 +192,18 @@ func sentCodeJSON(client *http.Client, game ConfigGameJSON, code string, isBonus
 			if err != nil {
 				log.Println("Ошибка генерации JSON.")
 				log.Println(err)
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
 			// Если получили ошибку
 			if ModelState.Event != 0 {
 				log.Println("Слетела авторизация...")
-				enterGameJSON(client, game)
+				enterGameJSON(client, *game)
 				continue
 			}
 
-			if isBonus {
+			if *isBonus {
 				if bodyJSON.EngineAction.BonusAction.IsCorrectAnswer == true {
 					msgBot.ChannelMessage = "Бонусный код &#9989;<b>ВЕРНЫЙ</b>"
 					webToBot <- msgBot
