@@ -33,6 +33,7 @@ func (conf *ConfigGameJSON) initTest() {
 	} else {
 		conf.URLGame = configuration.TestURLGame
 	}
+
 	conf.separateURL()
 }
 func TestAddUser(t *testing.T) {
@@ -442,8 +443,8 @@ func TestSendCodeJSON(t *testing.T) {
 
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
 	isBonus := new(bool)
-
 	*isBonus = false
+  
 	sendCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web

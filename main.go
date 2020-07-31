@@ -693,7 +693,6 @@ func main() {
 					*isBonus = false
 					if isAnswerBlock == true {
 						if (update.Message.Text[0:1] == "!") || (update.Message.Text[0:1] == "?") {
-
 							go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
 						} else {
 							msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume"
