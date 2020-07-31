@@ -82,6 +82,7 @@ func main() {
 		"/joke - шутки про команду;",
 		"/b - отправить бонусный код при ограничении;",
 		"/getPenalty - взять штрафную подсказку;",
+		"/add - добавить игрока;",
 
 		"\n<b>Помогалки:</b>",
 		"/ana - анаграммы;",
@@ -240,7 +241,6 @@ func main() {
 							log.Println(err)
 						}
 					}
-
 				}
 			}
 			break
@@ -498,6 +498,18 @@ func main() {
 				str = "Игра ещё не началась."
 			}
 			break
+		case "add":
+			if isWork {
+				go func() {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, addUser(&client, &confJSON, update.Message.CommandArguments()))
+					msg.ParseMode = "HTML"
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, _ = bot.Send(msg)
+				}()
+			} else {
+				str = "Игра ещё не началась."
+			}
+			break
 		case "bonuses":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -672,7 +684,7 @@ func main() {
 
 			if isWork && (update.Message.Chat.ID == msgBot.ChatId) {
 				// WTF symbol what i need ignore
-				if strings.IndexAny(strings.ToLower(update.Message.Text), ":;/, '*+@#$%^&(){}[]|") != -1 {
+				if strings.IndexAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") != -1 {
 					break
 				}
 

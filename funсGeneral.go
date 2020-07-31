@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -331,7 +333,6 @@ func convertTimeSec(times int) string {
 	if times == 0 {
 		return "0 секунд"
 	}
-
 	// из секунд в минуту
 	str := ""
 	timeSec := times % 60
@@ -387,7 +388,6 @@ func convertTimeSec(times int) string {
 		str += fmt.Sprintf("%d часов ", timeHour)
 		break
 	}
-
 	// Минуты
 	switch timeMin {
 	case 0:
@@ -434,4 +434,116 @@ func convertTimeSec(times int) string {
 		return fmt.Sprintf("%d секунд", times)
 	}
 	return strings.TrimSpace(str)
+}
+
+func addUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
+	var resp *http.Response
+	var err error
+	var errCounter int8
+	var isErrAdd = false
+	var strArr []string
+	type UserStruct struct {
+		userID   string
+		userName string
+		teamID   string
+	}
+	var user UserStruct
+
+	// Получение ника и id команды
+	for errCounter = 0; errCounter < 5; errCounter++ {
+		if strings.IndexAny(strings.ToLower(inputString), "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя") != -1 {
+			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {inputString}, "PlayerID": {""}})
+		} else {
+			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {""}, "PlayerID": {inputString}})
+		}
+
+		if err != nil || resp == nil {
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(string(body))
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+
+		strArr = regexp.MustCompile(`uid=(\d+)" id="SearchResultUsers_UserRepeater_ctl00_lnkLogin" target="_blank">(.+?)</a>`).FindStringSubmatch(string(body))
+		if len(strArr) > 0 {
+			user.userID = strArr[1]
+			user.userName = strArr[2]
+			isErrAdd = false
+			break
+		}
+		isErrAdd = true
+	}
+
+	if isErrAdd {
+		return fmt.Sprintf("&#10134;Не смогли найти игрока <b>%s</b>", inputString)
+	}
+
+	// Получение id команды
+	for errCounter = 0; errCounter < 5; errCounter++ {
+		resp, err = client.Get(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx", game.SubUrl))
+		if err != nil || resp == nil {
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(string(body))
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+
+		strArr = regexp.MustCompile(`tab=0&tid=(\d+)"`).FindStringSubmatch(string(body))
+		if len(strArr) > 0 {
+			user.teamID = strArr[1]
+			isErrAdd = false
+			break
+		}
+		enterGameJSON(client, *game)
+		isErrAdd = true
+	}
+
+	if isErrAdd {
+		return fmt.Sprintf("&#10134;Не смогли получить id команды для игрока <b>%s</b>", user.userName)
+	}
+
+	// Добавление игрока, установка галки
+	for errCounter = 0; errCounter < 5; errCounter++ {
+		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), url.Values{"NewMember": {user.userName}, "ctl06_content_ctl00_btnInvite.x": {"1"}, "ctl06_content_ctl00_btnInvite.y": {"1"}})
+		if err != nil || resp == nil {
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+		defer resp.Body.Close()
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			log.Println(string(body))
+			log.Println(err)
+			enterGameJSON(client, *game)
+			continue
+		}
+
+		if reg, _ := regexp.MatchString(fmt.Sprintf(`uid=%s">%s</a></td>\s+<td class="padL10">`, user.userID, user.userName), string(body)); reg {
+			if reg, _ := regexp.MatchString(fmt.Sprintf(`name="cbxCheck_%s" class='enCheckBox input`, user.userID), string(body)); reg {
+				_, _ = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), url.Values{"NewMember": {""}, "ctl06_content_ctl00_btnUpdateMember.x": {"1"}, "ctl06_content_ctl00_btnUpdateMember.y": {"1"}, fmt.Sprintf("cbxCheck_%s", user.userID): {"on"}})
+				continue
+			}
+			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>id%s</b>", user.userName, user.userID, user.teamID)
+		}
+		enterGameJSON(client, *game)
+	}
+	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>id%s</b>", user.userName, user.userID, user.teamID)
 }
