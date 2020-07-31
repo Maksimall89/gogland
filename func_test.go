@@ -34,13 +34,32 @@ func (conf *ConfigGameJSON) initTest() {
 		conf.URLGame = configuration.TestURLGame
 	}
 
-	if value, exists := os.LookupEnv("TestLevelNumber"); exists {
-		conf.LevelNumber, _ = strconv.ParseInt(value, 10, 64)
-	} else {
-		conf.LevelNumber = configuration.TestLevelNumber
-	}
-
 	conf.separateURL()
+}
+func TestAddUser(t *testing.T) {
+	t.Parallel()
+	cookieJar, _ := cookiejar.New(nil)
+	clientTEST := &http.Client{
+		Jar: cookieJar,
+	}
+	confGameENJSON := ConfigGameJSON{}
+	confGameENJSON.initTest()
+
+	// ВЫХОД
+	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
+	_, _ = clientTEST.Get(str)
+
+	rightTask := []string{"&#10134;Не смогли найти игрока <b>ERROR_sedfsdfsdf0f5we4fwerwjiejf</b>", "&#10133;Добавили игрока <b>Maksimal_bot (158796)</b> в команду <b>id7274</b>"}
+
+	if addUser(clientTEST, &confGameENJSON, "ERROR_sedfsdfsdf0f5we4fwerwjiejf") != rightTask[0] {
+		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "ERROR_sedfsdfsdf0f5we4fwerwjiejf"), "\nМы ждали:", rightTask[0])
+	}
+	if addUser(clientTEST, &confGameENJSON, "158796") != rightTask[1] {
+		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "158796"), "\nМы ждали:", rightTask[1])
+	}
+	if addUser(clientTEST, &confGameENJSON, "Maksimal_bot") != rightTask[1] {
+		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "Maksimal_bot"), "\nМы ждали:", rightTask[1])
+	}
 }
 
 func TestCompareBonuses(t *testing.T) {
@@ -400,9 +419,8 @@ func TestGameEngineModel(t *testing.T) {
 		t.Error("Игра НЕ в нормальном состоянии! Код ошибки: ", answer.Event)
 	}
 }
-func TestSentCodeJSON(t *testing.T) {
+func TestSendCodeJSON(t *testing.T) {
 	t.Parallel()
-	t.SkipNow()
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
 
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -413,7 +431,7 @@ func TestSentCodeJSON(t *testing.T) {
 		Jar: cookieJar,
 	}
 
-	confGameENJSON := ConfigGameJSON{}
+	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
 	// ВЫХОД
@@ -424,26 +442,40 @@ func TestSentCodeJSON(t *testing.T) {
 	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
 
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
-	var isBonus *bool
-	*isBonus = true
-	sentCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
+	isBonus := new(bool)
+	*isBonus = false
+  
+	sendCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
 		// конец
-		fmt.Println(msgChanel.ChannelMessage)
 		if msgChanel.ChannelMessage == "" {
 			return
 		}
-		fmt.Println(msgChanel.ChannelMessage)
 		if msgChanel.ChannelMessage != "Код &#10060;<b>НЕВЕРНЫЙ</b>" {
 			t.Error("КОД ОТПРАВЛЕН С ОШИБКОЙ! Мы получили: ", msgChanel.ChannelMessage, "\n Мы ждали: Код &#10060;<b>НЕВЕРНЫЙ</b>")
 		}
 	default:
 	}
+
+	*isBonus = true
+	sendCodeJSON(clientTEST, &confGameENJSON, code+"_bonus", isBonus, webToBotTEST, 0)
+	select {
+	// В канал msgChanel будут приходить все новые сообщения from web
+	case msgChanel = <-webToBotTEST:
+		// конец
+		if msgChanel.ChannelMessage == "" {
+			return
+		}
+		if msgChanel.ChannelMessage != "Бонусный код &#10060;<b>НЕВЕРНЫЙ</b>" {
+			t.Error("Бонусный КОД ОТПРАВЛЕН С ОШИБКОЙ! Мы получили: ", msgChanel.ChannelMessage, "\n Бонусный код &#10060;<b>НЕВЕРНЫЙ</b>")
+		}
+	default:
+	}
 }
 func TestEnterGameENJSON(t *testing.T) {
-
+	t.Parallel()
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{
 		Jar: cookieJar,
@@ -478,7 +510,7 @@ func TestGetPenaltyJSON(t *testing.T) {
 		Jar: cookieJar,
 	}
 
-	confGameENJSON := ConfigGameJSON{}
+	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
 	// ВЫХОД
@@ -493,7 +525,6 @@ func TestGetPenaltyJSON(t *testing.T) {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
 		// конец
-		fmt.Println(msgChanel.ChannelMessage)
 		if msgChanel.ChannelMessage == "" {
 			return
 		}
@@ -506,7 +537,6 @@ func TestGetPenaltyJSON(t *testing.T) {
 
 func TestConvertTimeSec(t *testing.T) {
 	t.Parallel()
-
 	type testPair struct {
 		original int
 		replaced string

@@ -30,7 +30,6 @@ func main() {
 	http.HandleFunc("/", MainHandler)
 	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 
-	var buffTextToChat string
 	var str string
 	var pointerStr int
 	var err error
@@ -45,7 +44,6 @@ func main() {
 		}
 
 		str = fmt.Sprintf("%s/%d-%02d-%02d-%02d-%02d-%02d-logFile.log", str, time.Now().Year(), time.Now().Month(), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), time.Now().Second())
-
 		// configurator for logger
 		// open a file
 		fileLog, err := os.OpenFile(str, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
@@ -84,6 +82,7 @@ func main() {
 		"/joke - шутки про команду;",
 		"/b - отправить бонусный код при ограничении;",
 		"/getPenalty - взять штрафную подсказку;",
+		"/add - добавить игрока;",
 
 		"\n<b>Помогалки:</b>",
 		"/ana - анаграммы;",
@@ -128,7 +127,9 @@ func main() {
 	var msgBot MessengerStyle // style for messenge chanel
 	var msgChanel MessengerStyle
 	var chatId int64
+
 	var bufCoordinate Coordinate
+	var buffTextToChat string
 
 	var update tgbotapi.Update  // chanel Update from telegram
 	var newMsg tgbotapi.Message // style message from telegram
@@ -240,7 +241,6 @@ func main() {
 							log.Println(err)
 						}
 					}
-
 				}
 			}
 			break
@@ -294,7 +294,7 @@ func main() {
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				*isBonus = true
 				str = ""
-				go sentCodeJSON(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
+				go sendCodeJSON(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 			} else {
 				str = "Игра ещё не началась."
 			}
@@ -498,6 +498,18 @@ func main() {
 				str = "Игра ещё не началась."
 			}
 			break
+		case "add":
+			if isWork {
+				go func() {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, addUser(&client, &confJSON, update.Message.CommandArguments()))
+					msg.ParseMode = "HTML"
+					msg.ReplyToMessageID = update.Message.MessageID
+					_, _ = bot.Send(msg)
+				}()
+			} else {
+				str = "Игра ещё не началась."
+			}
+			break
 		case "bonuses":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -672,7 +684,7 @@ func main() {
 
 			if isWork && (update.Message.Chat.ID == msgBot.ChatId) {
 				// WTF symbol what i need ignore
-				if strings.IndexAny(strings.ToLower(update.Message.Text), ":;/, '*+@#$%^&(){}[]|") != -1 {
+				if strings.IndexAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") != -1 {
 					break
 				}
 
@@ -681,15 +693,14 @@ func main() {
 					*isBonus = false
 					if isAnswerBlock == true {
 						if (update.Message.Text[0:1] == "!") || (update.Message.Text[0:1] == "?") {
-
-							go sentCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
+							go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
 						} else {
 							msgBot.ChannelMessage = "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume"
 							msgBot.MsgId = update.Message.MessageID
 							webToBot <- msgBot
 						}
 					} else {
-						go sentCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
+						go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
 					}
 					break
 				}

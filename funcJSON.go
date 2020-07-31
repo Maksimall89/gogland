@@ -96,7 +96,8 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 	return Model{}
 }
-func sentCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonus *bool, webToBot chan MessengerStyle, MsgId int) {
+
+func sendCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonus *bool, webToBot chan MessengerStyle, MsgId int) {
 	var msgBot MessengerStyle
 	msgBot.MsgId = MsgId
 	msgBot.Type = "text"
