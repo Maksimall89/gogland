@@ -14,6 +14,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 	locationMap = make(map[string]float64)
 
 	isGameStart := false
+	isPromblemStart := false
 
 	var str string
 	var bufStr string
@@ -36,7 +37,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 		select {
 		case msg := <-botToWeb:
 			if msg.ChannelMessage == "stop" {
-				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли :-( \nДля перезапуска используйте /restart"
+				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли &#128546; \nДля перезапуска используйте /restart"
 				webToBot <- msgBot
 				*isWork = false
 				log.Printf("Bot %s stop.\n", game.Gid)
@@ -53,7 +54,10 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 					isGameStart = true
 					break
 				} else {
-					str = "Не смогу получить состояние игры..."
+					if !isPromblemStart {
+						str = "Не смогу получить состояние игры..."
+						isPromblemStart = true
+					}
 					enterGameJSON(client, *game)
 					break
 				}

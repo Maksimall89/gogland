@@ -281,12 +281,12 @@ func replaceTag(str string, subUrl string) string {
 	}
 
 	// Coordinates
-	reg = regexp.MustCompile(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`)
+	reg = regexp.MustCompile(`[:|\s](\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[\s|,|.]`)
 	strArr = reg.FindAllString(str, -1)
 	for _, coordinate := range strArr {
 		finalCoordinates := searchLocation(coordinate)
 		for i := 0; i < len(finalCoordinates)/2; i++ {
-			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(`<code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>,`, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
+			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(` <code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>, `, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
 		}
 	}
 
@@ -437,15 +437,20 @@ func convertTimeSec(times int) string {
 }
 
 func addUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
+
 	var resp *http.Response
+	var body []byte
 	var err error
 	var errCounter int8
 	var isErrAdd = false
+	var isCapitan = true
 	var strArr []string
+
 	type UserStruct struct {
 		userID   string
 		userName string
 		teamID   string
+		teamName string
 	}
 	var user UserStruct
 
@@ -456,7 +461,6 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		} else {
 			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {""}, "PlayerID": {inputString}})
 		}
-
 		if err != nil || resp == nil {
 			log.Println(err)
 			enterGameJSON(client, *game)
@@ -464,7 +468,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		}
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
@@ -496,7 +500,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		}
 		defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
@@ -504,23 +508,39 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			continue
 		}
 
-		strArr = regexp.MustCompile(`tab=0&tid=(\d+)"`).FindStringSubmatch(string(body))
-		if len(strArr) > 0 {
-			user.teamID = strArr[1]
-			isErrAdd = false
-			break
+		if reg, _ := regexp.MatchString(`"return ToggleTeamMenu\(1\);" href="/Teams/TeamDetails\.aspx\?mode=mng">\w+</a>`, string(body)); reg {
+			isCapitan = true
+			strArr = regexp.MustCompile(`href="/Teams/TeamDetails\.aspx\?tid=(\d+)">(.+?)</a>`).FindStringSubmatch(string(body))
+			if len(strArr) > 0 {
+				user.teamID = strArr[1]
+				user.teamName = strArr[2]
+				isErrAdd = false
+				break
+			}
 		}
 		enterGameJSON(client, *game)
 		isErrAdd = true
 	}
 
+	if !isCapitan {
+		return fmt.Sprintf("&#10134;Игрок, под которым запущен бот <b>%s не имеет прав капитана!</b>", game.NickName)
+	}
 	if isErrAdd {
 		return fmt.Sprintf("&#10134;Не смогли получить id команды для игрока <b>%s</b>", user.userName)
 	}
 
 	// Добавление игрока, установка галки
 	for errCounter = 0; errCounter < 5; errCounter++ {
-		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), url.Values{"NewMember": {user.userName}, "ctl06_content_ctl00_btnInvite.x": {"1"}, "ctl06_content_ctl00_btnInvite.y": {"1"}})
+		formData := url.Values{}
+		formData.Add("NewMember", user.userName)
+		formData.Add("ctl06_content_ctl00_btnInvite.x", "1")
+		formData.Add("ctl06_content_ctl00_btnInvite.y", "1")
+		strArr = regexp.MustCompile(`name="cbxCheck_(\d+)" checked="checked" class='enCheckBox input'`).FindStringSubmatch(string(body))
+		for _, value := range strArr {
+			formData.Add(fmt.Sprintf("cbxCheck_%s", value), "on")
+		}
+
+		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formData)
 		if err != nil || resp == nil {
 			log.Println(err)
 			enterGameJSON(client, *game)
@@ -535,15 +555,25 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			enterGameJSON(client, *game)
 			continue
 		}
-
 		if reg, _ := regexp.MatchString(fmt.Sprintf(`uid=%s">%s</a></td>\s+<td class="padL10">`, user.userID, user.userName), string(body)); reg {
 			if reg, _ := regexp.MatchString(fmt.Sprintf(`name="cbxCheck_%s" class='enCheckBox input`, user.userID), string(body)); reg {
-				_, _ = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), url.Values{"NewMember": {""}, "ctl06_content_ctl00_btnUpdateMember.x": {"1"}, "ctl06_content_ctl00_btnUpdateMember.y": {"1"}, fmt.Sprintf("cbxCheck_%s", user.userID): {"on"}})
+				formDataCheckBox := url.Values{}
+				formDataCheckBox.Add("NewMember", "")
+				formDataCheckBox.Add("ctl06_content_ctl00_btnUpdateMember.x", "1")
+				formDataCheckBox.Add("ctl06_content_ctl00_btnUpdateMember.y", "1")
+				formDataCheckBox.Add(fmt.Sprintf("cbxCheck_%s", user.userID), "on")
+
+				strArr = regexp.MustCompile(`name="cbxCheck_(\d+)" checked="checked" class='enCheckBox input'`).FindStringSubmatch(string(body))
+				for _, value := range strArr {
+					formDataCheckBox.Add(fmt.Sprintf("cbxCheck_%s", value), "on")
+				}
+
+				_, _ = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formDataCheckBox)
 				continue
 			}
-			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>id%s</b>", user.userName, user.userID, user.teamID)
+			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 		}
 		enterGameJSON(client, *game)
 	}
-	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>id%s</b>", user.userName, user.userID, user.teamID)
+	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 }

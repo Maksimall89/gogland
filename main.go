@@ -74,7 +74,6 @@ func main() {
 		"/msg - все сообщения с уровня;",
 		"/timer - время до автоперехода;",
 		"/codes - оставшиеся коды;",
-		"/codestaken - снятые коды;",
 		"/codesall - оставшиеся + снятые коды;",
 		"/hints - все подсказки;",
 		"/penalty - все штрафные подсказки;",
@@ -201,6 +200,7 @@ func main() {
 							log.Println(err)
 							log.Println(msg.Text)
 							log.Println(msgChanel.ChannelMessage)
+							msg.ParseMode = "HTML"
 						}
 
 						if strings.Contains(msg.Text, "<b>Задание") {
@@ -220,6 +220,7 @@ func main() {
 								log.Println(err)
 								log.Println(msg.Text)
 								log.Println(msgChanel.ChannelMessage)
+								msg.ParseMode = "HTML"
 							}
 							break
 						}
@@ -233,6 +234,7 @@ func main() {
 						newMsg, _ = bot.Send(msg)
 						log.Println(err)
 						log.Println(msgChanel.ChannelMessage)
+						msg.ParseMode = "HTML"
 					}
 
 					if strings.Contains(msg.Text, "<b>Задание") {

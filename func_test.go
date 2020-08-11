@@ -49,16 +49,16 @@ func TestAddUser(t *testing.T) {
 	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
 	_, _ = clientTEST.Get(str)
 
-	rightTask := []string{"&#10134;Не смогли найти игрока <b>ERROR_sedfsdfsdf0f5we4fwerwjiejf</b>", "&#10133;Добавили игрока <b>Maksimal_bot (158796)</b> в команду <b>id7274</b>"}
+	rightTask := []string{"&#10134;Не смогли найти игрока <b>ERROR_sedfsdfsdf0f5we4fwerwjiejf</b>", "&#10133;Добавили игрока <b>Maksimal_bot (158796)</b> в команду <b>banda_game (7274)</b>"}
 
 	if addUser(clientTEST, &confGameENJSON, "ERROR_sedfsdfsdf0f5we4fwerwjiejf") != rightTask[0] {
-		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "ERROR_sedfsdfsdf0f5we4fwerwjiejf"), "\nМы ждали:", rightTask[0])
+		t.Error("1 Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "ERROR_sedfsdfsdf0f5we4fwerwjiejf"), "\nМы ждали:", rightTask[0])
 	}
 	if addUser(clientTEST, &confGameENJSON, "158796") != rightTask[1] {
-		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "158796"), "\nМы ждали:", rightTask[1])
+		t.Error("2 Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "158796"), "\nМы ждали:", rightTask[1])
 	}
 	if addUser(clientTEST, &confGameENJSON, "Maksimal_bot") != rightTask[1] {
-		t.Error("Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "Maksimal_bot"), "\nМы ждали:", rightTask[1])
+		t.Error("3 Пользователь не добавлен. Получен ответ:", addUser(clientTEST, &confGameENJSON, "Maksimal_bot"), "\nМы ждали:", rightTask[1])
 	}
 }
 
@@ -444,7 +444,7 @@ func TestSendCodeJSON(t *testing.T) {
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
 	isBonus := new(bool)
 	*isBonus = false
-  
+
 	sendCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
