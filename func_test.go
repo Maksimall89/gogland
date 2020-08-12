@@ -518,9 +518,7 @@ func TestGetPenaltyJSON(t *testing.T) {
 	_, _ = clientTEST.Get(str)
 
 	enterGameJSON(clientTEST, confGameENJSON)
-
-	penaltyID := 1111
-	getPenaltyJSON(clientTEST, confGameENJSON, penaltyID, webToBotTEST)
+	getPenaltyJSON(clientTEST, &confGameENJSON, "1111", webToBotTEST)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
@@ -619,13 +617,12 @@ func TestDeleteMap(t *testing.T) {
 
 	deleteMap(maps)
 
-	var v int
-	v = len(maps)
-	if v != 0 {
+	NewLenMaps := len(maps)
+	if NewLenMaps != 0 {
 		t.Error(
 			"For delete len map ", 3,
 			"expected", len(maps),
-			"got", v,
+			"got", NewLenMaps,
 		)
 	}
 }
@@ -640,13 +637,12 @@ func TestDeleteMapFloat(t *testing.T) {
 
 	deleteMapFloat(maps)
 
-	var v int
-	v = len(maps)
-	if v != 0 {
+	NewLenMaps := len(maps)
+	if NewLenMaps != 0 {
 		t.Error(
 			"For delete len map ", 3,
 			"expected", len(maps),
-			"got", v,
+			"got", NewLenMaps,
 		)
 	}
 }
@@ -841,9 +837,9 @@ func TestTransferToAlphabetToWord(t *testing.T) {
 	t.Parallel()
 
 	type testPair struct {
-		original  string
-		replaced  string
-		attribute bool
+		original string
+		replaced string
+		bool
 	}
 
 	var testsN2W = []testPair{
@@ -864,7 +860,6 @@ func TestTransferToAlphabetToWord(t *testing.T) {
 
 	for _, pair := range testsN2W {
 		v := transferToAlphabet(pair.original, true)
-		//v := transferToAlphabet(pair.original, pair.attribute)
 		if v != pair.replaced {
 			t.Error(
 				"Для", pair.original,
@@ -875,7 +870,6 @@ func TestTransferToAlphabetToWord(t *testing.T) {
 	}
 	for _, pair := range testsW2N {
 		v := transferToAlphabet(pair.original, false)
-		//v := transferToAlphabet(pair.original, pair.attribute)
 		if v != pair.replaced {
 			t.Error(
 				"Для", pair.original,

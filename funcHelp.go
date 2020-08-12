@@ -327,7 +327,7 @@ func tableMendeleev(text string) string {
 		number, err := strconv.Atoi(item)
 		if err != nil {
 			for _, element := range elements {
-				if strings.ToLower(element.name) == strings.ToLower(item) {
+				if strings.EqualFold(element.name, item) {
 					text += "Номер " + item + " = " + element.name + " - " + element.shortName + " - масса " + element.mass + ";\n"
 					attributeSearch = false
 					break

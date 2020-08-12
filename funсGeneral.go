@@ -22,11 +22,16 @@ func searchLocation(text string) map[string]float64 {
 		var min [2]float64
 		var sec [2]float64
 		var counter int
+		regPattern1, _ := regexp.Compile(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`)
+		regPattern2, _ := regexp.Compile(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`)
+		regPattern3, _ := regexp.Compile(`(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s\n\w<brBR/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)`)
+		regPattern4, _ := regexp.Compile(`(\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*`)
+		regPattern5, _ := regexp.Compile(`(\d{2}°+\d{2,8}'+\d{2,}")[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2,}")`)
 
 		for i := 0; i < len(s); i++ {
 			// 40.167841 58.410761 or 40,167841 58,410761
-			if reg, _ := regexp.MatchString(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`, s[i]); reg {
-				sNew := regexp.MustCompile(`(\d{2}[.|,]+\d{2,8})[,|\s\n\w<brBR/>]+(\d{2}[.|,]+\d{2,8})`).FindStringSubmatch(s[i])
+			if regPattern1.MatchString(s[i]) {
+				sNew := regPattern1.FindStringSubmatch(s[i])
 				sNew[1] = strings.ReplaceAll(sNew[1], ",", ".")
 				sNew[2] = strings.ReplaceAll(sNew[2], ",", ".")
 
@@ -38,9 +43,8 @@ func searchLocation(text string) map[string]float64 {
 			}
 
 			//  56°50.683, 53°11.776
-			if reg, _ := regexp.MatchString(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`, s[i]); reg {
-
-				sNew := regexp.MustCompile(`(\d{2}°+\d+\.+\d{1,8})[,\s\n\w<brBR/>]+(\d{2}°+\d+\.+\d{1,8})`).FindStringSubmatch(s[i])
+			if regPattern2.MatchString(s[i]) {
+				sNew := regPattern2.FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
 				buf2 := strings.Split(sNew[2], `°`)
 
@@ -59,8 +63,8 @@ func searchLocation(text string) map[string]float64 {
 
 			// 40°15′08″ 58°26′23″
 			// 40°15′08 58°26′23
-			if reg, _ := regexp.MatchString(`(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s\n\w<brBR/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)`, s[i]); reg {
-				sNew := regexp.MustCompile(`(\d{2}°+\d{1,8}′+\d{1,8}[″]*)[,|\s\n\w<brBR/>]+(\d{2}°+\d{1,8}′+\d{1,8}[″]*)`).FindStringSubmatch(s[i])
+			if regPattern3.MatchString(s[i]) {
+				sNew := regPattern3.FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
 				buf2 := strings.Split(sNew[2], `°`)
 
@@ -88,8 +92,8 @@ func searchLocation(text string) map[string]float64 {
 
 			// 59°24'48.6756" 58°24'38.7396"
 			// 59°24'48.6756 58°24'38.7396
-			if reg, _ := regexp.MatchString(`(\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*`, s[i]); reg {
-				sNew := regexp.MustCompile(`(\d{2}°+\d{2,8}'+\d{2}\.\d{1,8})["]*[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2}\.\d{1,8})["]*`).FindStringSubmatch(s[i])
+			if regPattern4.MatchString(s[i]) {
+				sNew := regPattern4.FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
 				buf2 := strings.Split(sNew[2], `°`)
 
@@ -116,9 +120,8 @@ func searchLocation(text string) map[string]float64 {
 			}
 
 			// 55°10'11"N 52°12'01"E
-			if reg, _ := regexp.MatchString(`(\d{2}°+\d{2,8}'+\d{2,}")[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2,}")`, s[i]); reg {
-
-				sNew := regexp.MustCompile(`(\d{2}°+\d{2,8}'+\d{2,}")[,|\s\n\w<brBR/>]+(\d{2}°+\d{2}'+\d{2,}")`).FindStringSubmatch(s[i])
+			if regPattern5.MatchString(s[i]) {
+				sNew := regPattern5.FindStringSubmatch(s[i])
 				buf1 := strings.Split(sNew[1], `°`)
 				buf2 := strings.Split(sNew[2], `°`)
 
@@ -162,7 +165,6 @@ func sentLocation(locationMap map[string]float64, webToBot chan MessengerStyle) 
 		msgBot.Type = "location"
 		webToBot <- msgBot
 	}
-	return
 }
 func searchPhoto(text string) map[int]string {
 	maps := make(map[int]string)
@@ -189,7 +191,6 @@ func sentPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
 		msgBot.Type = "photo"
 		webToBot <- msgBot
 	}
-	return
 }
 func replaceTag(str string, subUrl string) string {
 	/*
@@ -267,7 +268,7 @@ func replaceTag(str string, subUrl string) string {
 				break
 			}
 		}
-		if eval == false && !strings.Contains(teg, `<a href="`) {
+		if !eval && !strings.Contains(teg, `<a href="`) {
 			str = strings.Replace(str, teg, "", -1)
 		}
 		eval = false
@@ -281,7 +282,7 @@ func replaceTag(str string, subUrl string) string {
 	}
 
 	// Coordinates
-	reg = regexp.MustCompile(`[:|\s](\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[\s|,|.]`)
+	reg = regexp.MustCompile(`[:|\s](\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[\s|,.]`)
 	strArr = reg.FindAllString(str, -1)
 	for _, coordinate := range strArr {
 		finalCoordinates := searchLocation(coordinate)
@@ -354,19 +355,14 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d день ", timeDay)
-		break
 	case 2:
 		str += fmt.Sprintf("%d дня ", timeDay)
-		break
 	case 3:
 		str += fmt.Sprintf("%d дня ", timeDay)
-		break
 	case 4:
 		str += fmt.Sprintf("%d дня ", timeDay)
-		break
 	default:
 		str += fmt.Sprintf("%d дней ", timeDay)
-		break
 	}
 	// Часы
 	switch timeHour {
@@ -374,19 +370,14 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d час ", timeHour)
-		break
 	case 2:
 		str += fmt.Sprintf("%d часа ", timeHour)
-		break
 	case 3:
 		str += fmt.Sprintf("%d часа ", timeHour)
-		break
 	case 4:
 		str += fmt.Sprintf("%d часа ", timeHour)
-		break
 	default:
 		str += fmt.Sprintf("%d часов ", timeHour)
-		break
 	}
 	// Минуты
 	switch timeMin {
@@ -394,19 +385,14 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d минута ", timeMin)
-		break
 	case 2:
 		str += fmt.Sprintf("%d минуты ", timeMin)
-		break
 	case 3:
 		str += fmt.Sprintf("%d минуты ", timeMin)
-		break
 	case 4:
 		str += fmt.Sprintf("%d минуты ", timeMin)
-		break
 	default:
 		str += fmt.Sprintf("%d минут ", timeMin)
-		break
 	}
 	// Секунды
 	switch timeSec {
@@ -414,19 +400,14 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d секунда", timeSec)
-		break
 	case 2:
 		str += fmt.Sprintf("%d секунды", timeSec)
-		break
 	case 3:
 		str += fmt.Sprintf("%d секунды", timeSec)
-		break
 	case 4:
 		str += fmt.Sprintf("%d секунды", timeSec)
-		break
 	default:
 		str += fmt.Sprintf("%d секунд", timeSec)
-		break
 	}
 
 	// если не смогли распарсить
@@ -456,7 +437,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 
 	// Получение ника и id команды
 	for errCounter = 0; errCounter < 5; errCounter++ {
-		if strings.IndexAny(strings.ToLower(inputString), "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя") != -1 {
+		if strings.ContainsAny(strings.ToLower(inputString), "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя") {
 			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {inputString}, "PlayerID": {""}})
 		} else {
 			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {""}, "PlayerID": {inputString}})
@@ -491,6 +472,9 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 	}
 
 	// Получение id команды
+	regexpCaptain, _ := regexp.Compile(`"return ToggleTeamMenu\(1\);" href="/Teams/TeamDetails\.aspx\?mode=mng">\w+</a>`)
+	regexpTeamId, _ := regexp.Compile(`href="/Teams/TeamDetails\.aspx\?tid=(\d+)">(.+?)</a>`)
+
 	for errCounter = 0; errCounter < 5; errCounter++ {
 		resp, err = client.Get(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx", game.SubUrl))
 		if err != nil || resp == nil {
@@ -508,9 +492,9 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			continue
 		}
 
-		if reg, _ := regexp.MatchString(`"return ToggleTeamMenu\(1\);" href="/Teams/TeamDetails\.aspx\?mode=mng">\w+</a>`, string(body)); reg {
+		if regexpCaptain.MatchString(string(body)) {
 			isCapitan = true
-			strArr = regexp.MustCompile(`href="/Teams/TeamDetails\.aspx\?tid=(\d+)">(.+?)</a>`).FindStringSubmatch(string(body))
+			strArr = regexpTeamId.FindStringSubmatch(string(body))
 			if len(strArr) > 0 {
 				user.teamID = strArr[1]
 				user.teamName = strArr[2]
@@ -567,7 +551,6 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 				for _, value := range strArr {
 					formDataCheckBox.Add(fmt.Sprintf("cbxCheck_%s", value), "on")
 				}
-
 				_, _ = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formDataCheckBox)
 				continue
 			}

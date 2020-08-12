@@ -110,7 +110,6 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			default:
 				str = "&#9940;Проблемы с игрой...."
 				enterGameJSON(client, *game)
-				break
 			}
 
 			if str == bufStr {
@@ -119,14 +118,12 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 
 			msgBot.ChannelMessage = str
 			webToBot <- msgBot
-
 			bufStr = str
 		}
 	}
 
 	// Цикл самой игры
 	for {
-		str = ""
 		select {
 		// В канал msg будут приходить все новые сообщения from telegram
 		case msg := <-botToWeb:
@@ -160,7 +157,6 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			if bufModel.Level.Number != modelGame.Level.Number {
 				deleteMap(photoMap)
 				deleteMapFloat(locationMap)
-
 				msgBot.ChannelMessage = "&#9889;Выдан новый уровень!"
 				webToBot <- msgBot
 
@@ -195,24 +191,21 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				//  sent message
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
-
 				// Собираемы карты с кордами и фотками
 				photoMap = searchPhoto(str)
 				locationMap = searchLocation(str)
 				//sent maps
 				sentPhoto(photoMap, webToBot)
 				sentLocation(locationMap, webToBot)
-
 			} else {
-
 				str = ""
 				// Автопереход
 				if bufModel.Level.TimeoutSecondsRemain != modelGame.Level.TimeoutSecondsRemain {
 					switch modelGame.Level.TimeoutSecondsRemain {
 					case 60:
-						str += fmt.Sprintf("&#9200;До автоперехода 1&#8419;<b> минута!</b>\n")
+						str += "&#9200;До автоперехода 1&#8419;<b> минута!</b>\n"
 					case 300:
-						str += fmt.Sprintf("&#9200;До автоперехода 5&#8419;<b> минут!</b>\n")
+						str += "&#9200;До автоперехода 5&#8419;<b> минут!</b>\n"
 					}
 				}
 
@@ -220,12 +213,11 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				if bufModel.Level.SectorsLeftToClose != modelGame.Level.SectorsLeftToClose {
 					switch modelGame.Level.SectorsLeftToClose {
 					case 3:
-						str += fmt.Sprintf("&#128269;Осталось найти 3&#8419; сектора.\nСобрались тряпки!\n")
+						str += "&#128269;Осталось найти 3&#8419; сектора.\nСобрались тряпки!\n"
 					case 1:
-						str += fmt.Sprintf("&#128269;Осталось найти 1&#8419; сектор.\nТушёнки, пора уже найти его!\n")
+						str += "&#128269;Осталось найти 1&#8419; сектор.\nТушёнки, пора уже найти его!\n"
 					}
 				}
-
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
 
@@ -244,7 +236,6 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			// копируем всё в буфер
 			bufModel = modelGame
 			game.LevelNumber = modelGame.Level.Number
-
 			time.Sleep(time.Duration(70000 + rand.Intn(1000)))
 		}
 	}

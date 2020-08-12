@@ -28,7 +28,9 @@ func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 func main() {
 	// web server for heroku
 	http.HandleFunc("/", MainHandler)
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	go func() {
+		_ = http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	}()
 
 	var str string
 	var pointerStr int
@@ -157,7 +159,6 @@ func main() {
 			switch msgChanel.Type {
 			case "photo":
 				_, _ = bot.Send(tgbotapi.NewPhotoShare(chatId, msgChanel.ChannelMessage))
-				break
 			case "location":
 				if (bufCoordinate.Latitude == msgChanel.Latitude) && (bufCoordinate.Longitude == msgChanel.Longitude) {
 					break
@@ -165,7 +166,6 @@ func main() {
 				_, _ = bot.Send(tgbotapi.NewVenue(chatId, fmt.Sprintf(`%g %g`, msgChanel.Latitude, msgChanel.Longitude), "", msgChanel.Latitude, msgChanel.Longitude))
 				bufCoordinate.Latitude = msgChanel.Latitude
 				bufCoordinate.Longitude = msgChanel.Longitude
-				break
 			case "text":
 				msg = tgbotapi.NewMessage(chatId, msgChanel.ChannelMessage)
 				if msgChanel.MsgId != 0 {
@@ -245,7 +245,6 @@ func main() {
 					}
 				}
 			}
-			break
 		default:
 			break
 		}
@@ -267,31 +266,27 @@ func main() {
 			continue
 		}
 
-		str = ""         // clear old state
+		// clear old state
 		msgBot.MsgId = 0 // save new id
 
 		switch strings.ToLower(update.Message.Command()) {
 		case "help":
+			str = ""
 			for _, item := range commandArr {
 				str += item + "\n"
 			}
-			break
 		case "faq":
 			str = `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`
-			break
 		case "stop":
 			msgBot.ChannelMessage = "stop"
 			botToWeb <- msgBot
 			isWork = false
-			break
 		case "postfix":
 			confJSON.Postfix = update.Message.CommandArguments()
 			str = "Постфикс принят"
-			break
 		case "prefix":
 			confJSON.Prefix = update.Message.CommandArguments()
 			str = "Префикс принят"
-			break
 		case "b":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				*isBonus = true
@@ -300,7 +295,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "pause":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				isAnswerBlock = true
@@ -308,7 +302,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "resume":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				isAnswerBlock = false
@@ -316,17 +309,14 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "getPenalty":
-			text := "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>"
 			if len(update.Message.CommandArguments()) > 0 {
-				// TODO доделать взятие штрафной подсказки по аналогии с отправкой кода
-				text = "getPenaltyJSON()"
+				getPenaltyJSON(&client, &confJSON, update.Message.Text, webToBot)
+			} else {
+				msgBot.ChannelMessage = "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>"
+				msgBot.MsgId = update.Message.MessageID
+				botToWeb <- msgBot
 			}
-			msgBot.ChannelMessage = text
-			msgBot.MsgId = update.Message.MessageID
-			botToWeb <- msgBot
-			break
 		case "restart":
 			if !isWork {
 				log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
@@ -346,7 +336,6 @@ func main() {
 			} else {
 				str = "I work!"
 			}
-			break
 		case "start":
 			// set config can only owner
 			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
@@ -391,7 +380,6 @@ func main() {
 				}
 				log.Printf("%s try to change config!", update.Message.From.UserName)
 			}
-			break
 		case "hints":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -407,7 +395,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "penalty":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -423,7 +410,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "codesall":
 			//codesall - оставшиеся + снятые коды.
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
@@ -436,7 +422,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "codes":
 			///codes - оставшиеся коды.
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
@@ -449,7 +434,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "task":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -460,7 +444,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "msg":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -475,7 +458,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "timer":
 			if isWork {
 				go func() {
@@ -487,7 +469,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "time":
 			if isWork {
 				go func() {
@@ -499,7 +480,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "add":
 			if isWork {
 				go func() {
@@ -511,7 +491,6 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "bonuses":
 			if isWork && update.Message.Chat.ID == msgBot.ChatId {
 				go func() {
@@ -527,14 +506,12 @@ func main() {
 			} else {
 				str = "Игра ещё не началась."
 			}
-			break
 		case "joke":
 			if len(configuration.Jokes) > 0 {
 				str = configuration.Jokes[rand.Intn(len(configuration.Jokes))]
 			} else {
 				str = "Шуток нет."
 			}
-			break
 		case "n2w":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>"
@@ -546,7 +523,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "w2n":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>"
@@ -558,7 +534,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "ac":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>"
@@ -570,7 +545,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "ana":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>"
@@ -582,7 +556,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "bra":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>"
@@ -594,7 +567,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "smask":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>"
@@ -606,7 +578,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "mt":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>"
@@ -618,7 +589,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "mz":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>"
@@ -630,7 +600,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "ass":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>"
@@ -642,7 +611,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "b2d":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>"
@@ -654,7 +622,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "d2b":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>"
@@ -666,7 +633,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		case "qw":
 			go func() {
 				text := "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>"
@@ -678,7 +644,6 @@ func main() {
 				msg.ReplyToMessageID = update.Message.MessageID
 				_, _ = bot.Send(msg)
 			}()
-			break
 		default:
 			go func() {
 				sentLocation(searchLocation(update.Message.Text), webToBot)
@@ -686,14 +651,14 @@ func main() {
 
 			if isWork && (update.Message.Chat.ID == msgBot.ChatId) {
 				// WTF symbol what i need ignore
-				if strings.IndexAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") != -1 {
+				if strings.ContainsAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") {
 					break
 				}
 
 				// check  codes
-				if strings.HasPrefix(update.Message.Text, "!") || strings.HasPrefix(update.Message.Text, "?") || (strings.IndexAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789") != -1) {
+				if strings.HasPrefix(update.Message.Text, "!") || strings.HasPrefix(update.Message.Text, "?") || strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789") {
 					*isBonus = false
-					if isAnswerBlock == true {
+					if isAnswerBlock {
 						if (update.Message.Text[0:1] == "!") || (update.Message.Text[0:1] == "?") {
 							go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
 						} else {
