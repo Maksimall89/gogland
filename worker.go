@@ -9,7 +9,6 @@ import (
 )
 
 func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan MessengerStyle, isWork *bool, isAnswerBlock *bool) string {
-
 	photoMap = make(map[int]string)
 	locationMap = make(map[string]float64)
 
@@ -29,11 +28,8 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 	webToBot <- msgBot
 
 	// Получаем актуальное состояние игры
-	for {
+	for !isGameStart {
 		// если игра уже идёт
-		if isGameStart {
-			break
-		}
 		select {
 		case msg := <-botToWeb:
 			if msg.ChannelMessage == "stop" {
@@ -195,8 +191,8 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				photoMap = searchPhoto(str)
 				locationMap = searchLocation(str)
 				//sent maps
-				sentPhoto(photoMap, webToBot)
-				sentLocation(locationMap, webToBot)
+				sendPhoto(photoMap, webToBot)
+				sendLocation(locationMap, webToBot)
 			} else {
 				str = ""
 				// Автопереход

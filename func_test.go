@@ -771,7 +771,7 @@ func TestAnagram(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		v, _ := anagram(pair.original)
+		v := anagram(pair.original)
 		if v != pair.replaced {
 			t.Error(
 				"Для", pair.original,
@@ -798,7 +798,7 @@ func TestSearchForMask(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		v, _ := searchForMask(pair.original)
+		v := searchForMask(pair.original)
 		if v != pair.replaced {
 			t.Error(
 				"Для", pair.original,
@@ -823,7 +823,7 @@ func TestAssociations(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		v, _ := associations(pair.original)
+		v := associations(pair.original)
 		if v != pair.replaced {
 			t.Error(
 				"Для", pair.original,

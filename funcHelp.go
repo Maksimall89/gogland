@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -30,7 +29,7 @@ type AnswerPoncy struct {
 	PageDescription ObjPoncy `json:"page_description"`
 }
 
-func anagram(text string) (string, error) {
+func anagram(text string) string {
 	// create cookie
 	cookieJar, _ := cookiejar.New(nil)
 	client := &http.Client{
@@ -40,7 +39,7 @@ func anagram(text string) (string, error) {
 	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=" + text + "&answer_type=1")
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
+		return "Ошибка отправки запроса."
 	}
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
@@ -48,14 +47,14 @@ func anagram(text string) (string, error) {
 	if err != nil {
 		log.Println(string(body))
 		log.Println(err)
-		return "Не могу распарсить.", errors.New("не могу распарсить")
+		return "Не могу распарсить."
 	}
 
 	var answer AnswerPoncy // срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
+		return "Не могу распарсить JSON."
 	}
 
 	var str string
@@ -69,9 +68,9 @@ func anagram(text string) (string, error) {
 	} else {
 		str = "<b>Слов не обнаружено.</b>"
 	}
-	return str, nil
+	return str
 }
-func searchForMask(text string) (string, error) {
+func searchForMask(text string) string {
 	// create cookie
 	cookieJar, _ := cookiejar.New(nil)
 	client := &http.Client{
@@ -85,7 +84,7 @@ func searchForMask(text string) (string, error) {
 	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=words_by_mask_index&inword=" + text + "&answer_type=4")
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
+		return "Ошибка отправки запроса."
 	}
 
 	// read from body
@@ -94,7 +93,7 @@ func searchForMask(text string) (string, error) {
 	if err != nil {
 		log.Println(string(body))
 		log.Println(err)
-		return "Не могу распарсить.", errors.New("не могу распарсить")
+		return "Не могу распарсить."
 	}
 
 	var answer AnswerPoncy
@@ -102,7 +101,7 @@ func searchForMask(text string) (string, error) {
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
+		return "Не могу распарсить JSON."
 	}
 
 	var str string
@@ -117,9 +116,9 @@ func searchForMask(text string) (string, error) {
 		str = "<b>Слов не обнаружено.</b>"
 	}
 
-	return str, nil
+	return str
 }
-func associations(text string) (string, error) {
+func associations(text string) string {
 
 	type ObjSocialistic struct {
 		Name              string  `json:"name"`
@@ -144,7 +143,7 @@ func associations(text string) (string, error) {
 	resp, err := client.PostForm("http://sociation.org/ajax/word_associations/", url.Values{"max_count": {"0"}, "back": {"false"}, "word": {text}})
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса.", errors.New("ошибка отправки запроса")
+		return "Ошибка отправки запроса."
 	}
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
@@ -152,7 +151,7 @@ func associations(text string) (string, error) {
 	if err != nil {
 		log.Println(err)
 		log.Println(string(body))
-		return "Не могу распарсить.", errors.New("не могу распарсить")
+		return "Не могу распарсить."
 	}
 
 	var answer AnswerSocialistic
@@ -160,7 +159,7 @@ func associations(text string) (string, error) {
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
-		return "Не могу распарсить JSON.", errors.New("не могу распарсить JSON")
+		return "Не могу распарсить JSON."
 	}
 
 	var str string
@@ -175,7 +174,7 @@ func associations(text string) (string, error) {
 		str = "<b>Слов не обнаружено.</b>"
 	}
 
-	return str, nil
+	return str
 }
 func tableMendeleev(text string) string {
 

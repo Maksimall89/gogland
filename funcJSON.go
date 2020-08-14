@@ -467,9 +467,9 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 					webToBot <- msgBot
 
 					//if text have location
-					sentLocation(searchLocation(helpNew.PenaltyComment), webToBot)
+					sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 					//if text have img
-					sentPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
+					sendPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
 				}
 			}
 			// проверка на изменение текста
@@ -478,9 +478,9 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				webToBot <- msgBot
 
 				//if text have location
-				sentLocation(searchLocation(helpNew.HelpText), webToBot)
+				sendLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
 			}
 			// проверка, что уже отправляли
 			if helpNew.RemainSeconds != oldHelps[numberNew].RemainSeconds {
@@ -508,13 +508,13 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 
 				// ОПИСАНИЕ
 				//if text have location
-				sentLocation(searchLocation(helpNew.PenaltyComment), webToBot)
+				sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
+				sendPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
 				//if text have location
-				sentLocation(searchLocation(helpNew.HelpText), webToBot)
+				sendLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
 
 			} else {
 				str = fmt.Sprintf("&#11088;<b>Новая подсказка</b> №%d", helpNew.Number)
@@ -527,9 +527,9 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				webToBot <- msgBot
 
 				//if text have location
-				sentLocation(searchLocation(helpNew.HelpText), webToBot)
+				sendLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
 			}
 
 			switch helpNew.RemainSeconds {
@@ -576,9 +576,9 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 				webToBot <- msgBot
 				msgBot.ChannelMessage = ""
 				//if text have location
-				sentLocation(searchLocation(bonusNew.Task), webToBot)
+				sendLocation(searchLocation(bonusNew.Task), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(bonusNew.Task), webToBot)
+				sendPhoto(searchPhoto(bonusNew.Task), webToBot)
 			}
 			// проверка на изменение текста
 			if old[numberNew].Help != bonusNew.Help {
@@ -591,9 +591,9 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 				webToBot <- msgBot
 				msgBot.ChannelMessage = ""
 				//if text have location
-				sentLocation(searchLocation(bonusNew.Help), webToBot)
+				sendLocation(searchLocation(bonusNew.Help), webToBot)
 				//if text have img
-				sentPhoto(searchPhoto(bonusNew.Help), webToBot)
+				sendPhoto(searchPhoto(bonusNew.Help), webToBot)
 			}
 
 			// проверка, что уже отправляли
@@ -627,14 +627,14 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 			msgBot.ChannelMessage = ""
 			// задание
 			//if text have location
-			sentLocation(searchLocation(bonusNew.Task), webToBot)
+			sendLocation(searchLocation(bonusNew.Task), webToBot)
 			//if text have img
-			sentPhoto(searchPhoto(bonusNew.Task), webToBot)
+			sendPhoto(searchPhoto(bonusNew.Task), webToBot)
 			// ответ
 			//if text have location
-			sentLocation(searchLocation(bonusNew.Help), webToBot)
+			sendLocation(searchLocation(bonusNew.Help), webToBot)
 			//if text have img
-			sentPhoto(searchPhoto(bonusNew.Help), webToBot)
+			sendPhoto(searchPhoto(bonusNew.Help), webToBot)
 
 			// будет доступен через
 			str := ""

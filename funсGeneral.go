@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gopkg.in/telegram-bot-api.v4"
 	"io/ioutil"
 	"log"
 	"math"
@@ -12,6 +13,52 @@ import (
 	"strings"
 )
 
+func sendMessageTelegram(chatId int64, message string, replyToMessageID int, bot *tgbotapi.BotAPI) error {
+	var pointerStr int
+	var msg tgbotapi.MessageConfig
+	var newMsg tgbotapi.Message
+	var err error
+	isEnd := false
+
+	if len(message) == 0 {
+		return nil
+	}
+	if replyToMessageID != 0 {
+		msg.ReplyToMessageID = replyToMessageID
+	}
+	msg.ChatID = chatId
+	msg.ParseMode = "HTML"
+
+	for !isEnd {
+		if len(message) > 4090 { // ограничение на длину одного сообщения 4096
+			pointerStr = strings.LastIndex(message[0:4090], "\n")
+			msg.Text = message[0:pointerStr]
+			message = message[pointerStr:]
+		} else {
+			msg.Text = message
+			isEnd = true
+		}
+
+		newMsg, err = bot.Send(msg)
+		if err != nil {
+			msg.ParseMode = "Markdown"
+			newMsg, err = bot.Send(msg)
+			if err != nil {
+				log.Println(err)
+				log.Println(msg.Text)
+			}
+			msg.ParseMode = "HTML"
+		}
+		if strings.Contains(msg.Text, "<b>Задание") {
+			_, err := bot.PinChatMessage(tgbotapi.PinChatMessageConfig{ChatID: chatId, MessageID: newMsg.MessageID})
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
 func searchLocation(text string) map[string]float64 {
 	maps := make(map[string]float64)
 	if reg, _ := regexp.MatchString(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`, text); reg {
@@ -150,8 +197,7 @@ func searchLocation(text string) map[string]float64 {
 	}
 	return maps
 }
-func sentLocation(locationMap map[string]float64, webToBot chan MessengerStyle) {
-
+func sendLocation(locationMap map[string]float64, webToBot chan MessengerStyle) {
 	if len(locationMap) < 1 {
 		return
 	}
@@ -177,8 +223,7 @@ func searchPhoto(text string) map[int]string {
 	}
 	return maps
 }
-func sentPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
-
+func sendPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
 	if len(photoMap) < 1 {
 		return
 	}
@@ -290,7 +335,6 @@ func replaceTag(str string, subUrl string) string {
 			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(` <code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>, `, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
 		}
 	}
-
 	// Convert Links
 	reg = regexp.MustCompile(`<a href="(.+?)"*>(.+?)</a>`)
 	strArr = reg.FindAllString(str, -1)
@@ -427,13 +471,12 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 	var isCapitan = true
 	var strArr []string
 
-	type UserStruct struct {
+	var user struct {
 		userID   string
 		userName string
 		teamID   string
 		teamName string
 	}
-	var user UserStruct
 
 	// Получение ника и id команды
 	for errCounter = 0; errCounter < 5; errCounter++ {
@@ -491,7 +534,6 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			enterGameJSON(client, *game)
 			continue
 		}
-
 		if regexpCaptain.MatchString(string(body)) {
 			isCapitan = true
 			strArr = regexpTeamId.FindStringSubmatch(string(body))
