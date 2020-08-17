@@ -8,11 +8,35 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
+func logInit() {
+	path := "log" // name folder for logs
+	// check what folder log is exist
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		_ = os.MkdirAll(path, os.ModePerm)
+	}
+	dateTime := time.Now()
+	path = fmt.Sprintf("%s/%s-logFile.log", path, dateTime.Format("02.01.2006-15.04.05.000"))
+	// configurator for logger
+	// open a file
+	fileLog, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	if err != nil {
+		fmt.Printf("Error opening file: %v", err)
+	}
+	defer fileLog.Close()
+	defer log.Println(recover())
+
+	// assign it to the standard logger
+	log.SetOutput(fileLog)
+	log.SetPrefix("Gogland ")
+}
 func sendMessageTelegram(chatId int64, message string, replyToMessageID int, bot *tgbotapi.BotAPI) error {
 	var pointerStr int
 	var msg tgbotapi.MessageConfig

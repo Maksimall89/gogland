@@ -46,7 +46,6 @@ func enterGameJSON(client *http.Client, game ConfigGameJSON) string {
 			_, _ = client.PostForm(fmt.Sprintf("http://%s/Login.aspx?return=/GameDetails.aspx?gid=%s", game.SubUrl, game.Gid), url.Values{"socialAssign": {"0"}, "Login": {game.NickName}, "Password": {game.Password}, "EnButton1": {"Вход"}, "ddlNetwork": {"1"}})
 			continue
 		}
-
 		if bodyJSON.Error == 0 {
 			return fmt.Sprintf("&#10004;<b>Авторизация прошла успешно</b> на игру: %s", game.URLGame)
 		}
@@ -381,7 +380,7 @@ func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 				}
 				// Проверяем, что нужно подтеверждение и мы не взяли ещё подсказку
 				if penaltyHelp.RequestConfirm && penaltyHelp.HelpText == "" {
-					str += fmt.Sprintf("&#9888;Треубется подтверждение взятия штрафной подсказки: %d\n", penaltyHelp.HelpId)
+					str += fmt.Sprintf("&#9888;Треубется подтверждение взятия штрафной подсказки: %d\n. Чтобы её взять введите: <code>/getPenalty %d</code>", penaltyHelp.HelpId, penaltyHelp.HelpId)
 				}
 				// Штраф за взятие если ещё ёё не взяли
 				if penaltyHelp.Penalty != 0 && penaltyHelp.HelpText == "" {

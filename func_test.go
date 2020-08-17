@@ -21,13 +21,11 @@ func (conf *ConfigGameJSON) initTest() {
 	} else {
 		conf.NickName = configuration.TestNickName
 	}
-
 	if value, exists := os.LookupEnv("TestPassword"); exists {
 		conf.Password = value
 	} else {
 		conf.Password = configuration.TestPassword
 	}
-
 	if value, exists := os.LookupEnv("TestURLGame"); exists {
 		conf.URLGame = value
 	} else {

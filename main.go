@@ -26,38 +26,19 @@ func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 }
 
 func main() {
+	rand.Seed(time.Now().UTC().UnixNano()) // real random
 	var err error
 	var confJSON ConfigGameJSON
+
+	if os.Getenv("Gogland_logs") == "1" {
+		logInit()
+	}
 
 	// web server for heroku
 	http.HandleFunc("/", MainHandler)
 	go func() {
 		err = http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	}()
-
-	if os.Getenv("Gogland_logs") == "1" {
-		path := "log" // name folder for logs
-		// check what folder log is exist
-		_, err = os.Stat(path)
-		if os.IsNotExist(err) {
-			_ = os.MkdirAll(path, os.ModePerm)
-		}
-
-		path = fmt.Sprintf("%s/%d-%02d-%02d-%02d-%02d-%02d-logFile.log", path, time.Now().Year(), time.Now().Month(), time.Now().Day(), time.Now().Hour(), time.Now().Minute(), time.Now().Second())
-		// configurator for logger
-		// open a file
-		fileLog, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-		if err != nil {
-			fmt.Printf("Error opening file: %v", err)
-		}
-		defer fileLog.Close()
-		defer log.Println(recover())
-
-		// assign it to the standard logger
-		log.SetOutput(fileLog)
-		log.SetPrefix("Gogland ")
-	}
-
 	// create chanel
 	webToBot := make(chan MessengerStyle, 100000) // chanel for send command in game and back information
 	botToWeb := make(chan MessengerStyle, 100)    // chanel for send command in game and back information
@@ -106,11 +87,9 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
-
 	bot.Debug = false
 	log.Printf("Authorized on account %s", bot.Self.UserName)
-
-	defer log.Println("Bot off!.")
+	defer log.Println("Bot off!")
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 0 // TIME OUT!!
@@ -124,17 +103,15 @@ func main() {
 	// set default config
 	var msgChannel MessengerStyle
 	var chatId int64
-
-	var bufCoordinate Coordinate
-	var buffTextToChat string
-
+	var buffer struct {
+		Coordinate Coordinate
+		TextToChat string
+	}
 	var update tgbotapi.Update // chanel Update from telegram
 
 	isAnswerBlock = false // pass for enter code
 	isWork = false        // state work bot
 	isBonus := new(bool)  // code bonus
-
-	rand.Seed(time.Now().UTC().UnixNano()) // real random
 
 	// main cycle
 	for {
@@ -146,18 +123,18 @@ func main() {
 			case "photo":
 				_, _ = bot.Send(tgbotapi.NewPhotoShare(chatId, msgChannel.ChannelMessage))
 			case "location":
-				if (bufCoordinate.Latitude == msgChannel.Latitude) && (bufCoordinate.Longitude == msgChannel.Longitude) {
+				if (buffer.Coordinate.Latitude == msgChannel.Latitude) && (buffer.Coordinate.Longitude == msgChannel.Longitude) {
 					break
 				}
 				_, _ = bot.Send(tgbotapi.NewVenue(chatId, fmt.Sprintf(`%g %g`, msgChannel.Latitude, msgChannel.Longitude), "", msgChannel.Latitude, msgChannel.Longitude))
-				bufCoordinate.Latitude = msgChannel.Latitude
-				bufCoordinate.Longitude = msgChannel.Longitude
+				buffer.Coordinate.Latitude = msgChannel.Latitude
+				buffer.Coordinate.Longitude = msgChannel.Longitude
 			case "text":
 				// проверка на повтор сообщения
-				if msgChannel.ChannelMessage == buffTextToChat || len(msgChannel.ChannelMessage) == 0 {
+				if msgChannel.ChannelMessage == buffer.TextToChat || len(msgChannel.ChannelMessage) == 0 {
 					continue
 				} else {
-					buffTextToChat = msgChannel.ChannelMessage
+					buffer.TextToChat = msgChannel.ChannelMessage
 				}
 				_ = sendMessageTelegram(chatId, msgChannel.ChannelMessage, 0, bot)
 			}

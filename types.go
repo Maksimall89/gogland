@@ -19,6 +19,12 @@ func (conf *ConfigGameJSON) init(str string) string {
 	conf.Password = args[1]
 	conf.URLGame = args[2]
 
+	conf.separateURL()
+
+	return ""
+}
+
+func (conf *ConfigGameJSON) separateURL() {
 	pathUrl := strings.Split(conf.URLGame, "/")
 	if len(pathUrl) > 1 {
 		conf.SubUrl = pathUrl[2]
@@ -27,7 +33,6 @@ func (conf *ConfigGameJSON) init(str string) string {
 	if len(pathUrl) > 0 {
 		conf.Gid = pathUrl[1]
 	}
-	return ""
 }
 
 func (conf *ConfigBot) init(path string) {
