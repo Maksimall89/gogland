@@ -60,7 +60,7 @@ func main() {
 
 	// create chanel
 	webToBot := make(chan MessengerStyle, 100000) // chanel for send command in game and back information
-	botToWeb := make(chan MessengerStyle, 100000) // chanel for send command in game and back information
+	botToWeb := make(chan MessengerStyle, 100)    // chanel for send command in game and back information
 
 	commandArr := []string{
 		"/help - информация по всем доступным командам;",
@@ -138,8 +138,9 @@ func main() {
 
 	// main cycle
 	for {
-		select {
+
 		// В канал будут приходить все новые сообщения from web
+		select {
 		case msgChannel = <-webToBot:
 			switch msgChannel.Type {
 			case "photo":
@@ -163,9 +164,8 @@ func main() {
 		default:
 			break
 		}
-
-		select {
 		// В канал updates будут приходить все новые сообщения from telegram
+		select {
 		case update = <-updates:
 			if !isWork {
 				chatId = update.Message.Chat.ID
@@ -251,23 +251,7 @@ func main() {
 		case "start":
 			// set config can only owner
 			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
-				// split arg
-				args := strings.Split(update.Message.CommandArguments(), " ")
-				if len(args) < 3 {
-					_ = sendMessageTelegram(chatId, "Need more arguments! [start login password http://DEMO.en.cx/GameDetails.aspx?gid=1]", 0, bot)
-					log.Printf("%s try to change config! Need more arguments!", update.Message.From.UserName)
-					break
-				}
-				if len(args) > 3 {
-					_ = sendMessageTelegram(chatId, "Слишком много аргументов!", 0, bot)
-					log.Printf("%s try to change config!", update.Message.From.UserName)
-					break
-				}
-				// configuration game
-				confJSON.NickName = args[0]
-				confJSON.Password = args[1]
-				confJSON.URLGame = args[2]
-				confJSON.separateURL()
+				_ = sendMessageTelegram(chatId, confJSON.init(update.Message.CommandArguments()), 0, bot)
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 
 				// create cookie
@@ -426,7 +410,7 @@ func main() {
 			}()
 		case "bra":
 			go func() {
-				if len(update.Message.CommandArguments()) == 6 {
+				if len(update.Message.CommandArguments()) > 5 {
 					_ = sendMessageTelegram(chatId, braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)

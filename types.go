@@ -7,7 +7,18 @@ import (
 	"strings"
 )
 
-func (conf *ConfigGameJSON) separateURL() {
+func (conf *ConfigGameJSON) init(str string) string {
+	args := strings.Split(str, " ")
+	if len(args) < 3 {
+		return "Need more arguments! <code>/start login password http://DEMO.en.cx/GameDetails.aspx?gid=1</code>"
+	}
+	if len(args) > 3 {
+		return "Слишком много аргументов!"
+	}
+	conf.NickName = args[0]
+	conf.Password = args[1]
+	conf.URLGame = args[2]
+
 	pathUrl := strings.Split(conf.URLGame, "/")
 	if len(pathUrl) > 1 {
 		conf.SubUrl = pathUrl[2]
@@ -16,6 +27,7 @@ func (conf *ConfigGameJSON) separateURL() {
 	if len(pathUrl) > 0 {
 		conf.Gid = pathUrl[1]
 	}
+	return ""
 }
 
 func (conf *ConfigBot) init(path string) {

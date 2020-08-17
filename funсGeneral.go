@@ -49,7 +49,7 @@ func sendMessageTelegram(chatId int64, message string, replyToMessageID int, bot
 			}
 			msg.ParseMode = "HTML"
 		}
-		if strings.Contains(msg.Text, "<b>Задание") {
+		if strings.Contains(msg.Text, "&#9889;Выдан новый уровень!") {
 			_, err := bot.PinChatMessage(tgbotapi.PinChatMessageConfig{ChatID: chatId, MessageID: newMsg.MessageID})
 			if err != nil {
 				log.Println(err)
