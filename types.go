@@ -37,6 +37,9 @@ func (conf *ConfigBot) init(path string) {
 	}
 }
 
+/*
+	Config our bot
+*/
 type ConfigBot struct {
 	TelegramBotToken string
 	OwnName          string
@@ -47,6 +50,9 @@ type ConfigBot struct {
 	Jokes            []string
 }
 
+/*
+	Style all message between bot and telegram
+*/
 type MessengerStyle struct {
 	Latitude       float64
 	Longitude      float64

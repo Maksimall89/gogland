@@ -91,7 +91,6 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 		}
 		return *bodyJSON
 	}
-
 	return Model{}
 }
 
@@ -225,7 +224,6 @@ func sendCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonu
 		webToBot <- msgBot
 		return
 	}
-
 	msgBot.ChannelMessage = "&#9940;Превышено число попыток отправить код!\nПовторите ещё раз."
 	webToBot <- msgBot
 }
@@ -255,7 +253,6 @@ func getPenaltyJSON(client *http.Client, game *ConfigGameJSON, penaltyID string,
 			enterGameJSON(client, *game)
 			continue
 		}
-
 		if strings.Contains(string(body), `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">`) {
 			enterGameJSON(client, *game)
 			continue
@@ -279,7 +276,6 @@ func getPenaltyJSON(client *http.Client, game *ConfigGameJSON, penaltyID string,
 		webToBot <- msgBot
 		return
 	}
-
 	msgBot.ChannelMessage = "&#9940;Превышено число попыток взять штрафную подсказку!\nПовторите ещё раз."
 	webToBot <- msgBot
 }
@@ -465,7 +461,6 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				if oldHelps[numberNew].PenaltyComment != helpNew.PenaltyComment {
 					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение в описании</b> штрафной подсказки №%d:\n%s\n", helpNew.Number, replaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
 					webToBot <- msgBot
-
 					//if text have location
 					sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 					//if text have img
@@ -476,7 +471,6 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 			if oldHelps[numberNew].HelpText != helpNew.HelpText {
 				msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в %s №%d:\n%s\n", StartString, helpNew.Number, replaceTag(helpNew.HelpText, gameConf.SubUrl))
 				webToBot <- msgBot
-
 				//if text have location
 				sendLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
@@ -505,7 +499,6 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
-
 				// ОПИСАНИЕ
 				//if text have location
 				sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
@@ -525,13 +518,11 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
-
 				//if text have location
 				sendLocation(searchLocation(helpNew.HelpText), webToBot)
 				//if text have img
 				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
 			}
-
 			switch helpNew.RemainSeconds {
 			case 60:
 				msgBot.ChannelMessage = fmt.Sprintf("&#10004;<b>%s</b> №%d через 1&#8419; минуту.\n", StartString, helpNew.Number)
@@ -595,7 +586,6 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 				//if text have img
 				sendPhoto(searchPhoto(bonusNew.Help), webToBot)
 			}
-
 			// проверка, что уже отправляли
 			if bonusNew.SecondsToStart != old[numberNew].SecondsToStart {
 				// будет доступен через
@@ -635,7 +625,6 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 			sendLocation(searchLocation(bonusNew.Help), webToBot)
 			//if text have img
 			sendPhoto(searchPhoto(bonusNew.Help), webToBot)
-
 			// будет доступен через
 			str := ""
 			switch bonusNew.SecondsToStart {
@@ -677,11 +666,9 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 			}
 		}
 	}
-
 	if len(newMessages) < len(oldMessages) {
 		str += "&#128495;<b>Сообщение удалено&#128465;.</b>\n"
 	}
-
 	if len(newMessages) == len(oldMessages) {
 		for number, model := range newMessages {
 			if model.MessageText != oldMessages[number].MessageText {
@@ -689,7 +676,6 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 			}
 		}
 	}
-
 	msgBot := MessengerStyle{}
 	msgBot.ChannelMessage = str
 	msgBot.Type = "text"
@@ -710,12 +696,10 @@ func compareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigG
 		msgBot.ChannelMessage = "&#10004;<b>Появилось новое задание!</b>\n"
 		webToBot <- msgBot
 	}
-
 	if len(newTasks) < len(oldTasks) {
 		msgBot.ChannelMessage = "&#10060;<b>Задание удалено&#128465;!</b>\n"
 		webToBot <- msgBot
 	}
-
 	for numberNew, newTask := range newTasks {
 		str = ""
 		if numberNew < len(oldTasks) {

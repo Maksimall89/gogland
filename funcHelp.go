@@ -115,11 +115,9 @@ func searchForMask(text string) string {
 	} else {
 		str = "<b>Слов не обнаружено.</b>"
 	}
-
 	return str
 }
 func associations(text string) string {
-
 	type ObjSocialistic struct {
 		Name              string  `json:"name"`
 		PopularityInverse int     `json:"popularity_inverse"`
@@ -130,7 +128,7 @@ func associations(text string) string {
 		Weight            float64 `json:"weight"`
 		Positivity        float64 `json:"positivity"`
 	}
-	type AnswerSocialistic struct {
+	var answer struct {
 		Associations []struct{ ObjSocialistic } `json:"associations"`
 		Word         string                     `json:"word"`
 	}
@@ -154,7 +152,6 @@ func associations(text string) string {
 		return "Не могу распарсить."
 	}
 
-	var answer AnswerSocialistic
 	// срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
@@ -343,7 +340,6 @@ func tableMendeleev(text string) string {
 			text += "Номера " + item + " не существует в таблице.\n"
 		}
 	}
-
 	return text
 }
 func morse(text string) string {
@@ -419,7 +415,6 @@ func morse(text string) string {
 		if item == "" {
 			continue
 		}
-
 		for _, symbol := range symbols {
 			if symbol.name == item {
 				text += item + " = <b>RU</b> " + symbol.rusSymbol + " <b>EN</b> " + symbol.engSymbol + ";\n"
@@ -429,7 +424,6 @@ func morse(text string) string {
 			text += "Символа " + item + " азбуке морзе нет.\n"
 		}
 	}
-
 	return text
 }
 func autoCode(text string) string {
@@ -576,7 +570,6 @@ func autoCode(text string) string {
 		if item == "" {
 			continue
 		}
-
 		for _, region := range regions {
 			if region.code == item {
 				text += "<b>" + item + "</b> регион = " + region.region + ";\n"
@@ -675,9 +668,7 @@ func autoCode(text string) string {
 			"94 - Территории, находящиеся за пределами РФ и обслуживаемые Департаментом режимных объектов МВД России\n" +
 			"95 - Чеченская республика"
 	}
-
 	return text
-
 }
 func braille(text string) string {
 	type table struct {
@@ -744,7 +735,6 @@ func braille(text string) string {
 		if item == "" {
 			continue
 		}
-
 		for _, symbol := range symbols {
 			if symbol.code == item {
 				text += item + " = <b>RU</b> " + symbol.rusSymbol + " <b>EN</b> " + symbol.engSymbol + " <b>№</b> " + symbol.number + ";\n"
@@ -754,7 +744,6 @@ func braille(text string) string {
 			text += "Символа " + item + " шрифте Браиля нет.\n"
 		}
 	}
-
 	return text
 }
 func bin(text string, attribute bool) string {
@@ -802,7 +791,6 @@ func bin(text string, attribute bool) string {
 			}
 		}
 	}
-
 	return text
 }
 func transferToAlphabet(text string, types bool) string {
@@ -812,7 +800,6 @@ func transferToAlphabet(text string, types bool) string {
 
 	if types {
 		arrText := strings.Split(text, " ")
-
 		text = ""
 		for _, item := range arrText {
 			if item == "" {
@@ -850,11 +837,9 @@ func transferToAlphabet(text string, types bool) string {
 			}
 		}
 	}
-
 	return text
 }
 func translateQwerty(text string) string {
-
 	type table struct {
 		eng string
 		rus string
@@ -913,7 +898,6 @@ func translateQwerty(text string) string {
 			text += "Символа " + strings.ToUpper(item) + " на клавиатуре нет.\n"
 		}
 	}
-
 	return text
 }
 

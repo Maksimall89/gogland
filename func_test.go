@@ -38,6 +38,7 @@ func (conf *ConfigGameJSON) initTest() {
 }
 func TestAddUser(t *testing.T) {
 	t.Parallel()
+
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{
 		Jar: cookieJar,
@@ -64,6 +65,7 @@ func TestAddUser(t *testing.T) {
 
 func TestCompareBonuses(t *testing.T) {
 	t.Parallel()
+
 	confGameENJSON := ConfigGameJSON{}
 	confGameENJSON.initTest()
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -109,6 +111,7 @@ func TestCompareBonuses(t *testing.T) {
 }
 func TestCompareHints(t *testing.T) {
 	t.Parallel()
+
 	confGameENJSON := ConfigGameJSON{}
 	confGameENJSON.initTest()
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -152,6 +155,7 @@ func TestCompareHints(t *testing.T) {
 }
 func TestCompareHintsPenalty(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -201,6 +205,7 @@ func TestCompareHintsPenalty(t *testing.T) {
 }
 func TestCompareMessages(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -239,6 +244,7 @@ func TestCompareMessages(t *testing.T) {
 }
 func TestCompareTasks(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -278,6 +284,7 @@ func TestCompareTasks(t *testing.T) {
 
 func TestGetLeftCodes(t *testing.T) {
 	t.Parallel()
+
 	sectors := []SectorsStruct{{1, 1, "bb", AnswerStruct{}, false}, {2, 2, "bbb", AnswerStruct{}, true}, {3, 3, "bbb", AnswerStruct{}, false}}
 	checkSectors := []string{
 		"Вам осталось снять сектора:\n\n&#10060;Сектор <b>bb №1</b> не отгадан.\n&#10060;Сектор <b>bbb №3</b> не отгадан.\n",
@@ -293,6 +300,7 @@ func TestGetLeftCodes(t *testing.T) {
 }
 func TestGetFirstBonuses(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
@@ -315,6 +323,7 @@ func TestGetFirstBonuses(t *testing.T) {
 }
 func TestFirstSectors(t *testing.T) {
 	t.Parallel()
+
 	tasks := []LevelStruct{
 		{270768, "rr1rr", 9, 0, 0, 0, false, false, StartTimeStruct{5}, false, 1, 1, 1, 1, 3, 1, 1, nil, nil, nil, []SectorsStruct{{1, 2, "bb", AnswerStruct{}, false}, {2, 3, "bbb", AnswerStruct{}, false}, {3, 3, "bbb", AnswerStruct{}, false}}, nil, nil, nil},
 		{270768, "rr2rr", 9, 100, 10, 60, false, false, StartTimeStruct{5}, false, 0, 1, 1, 1, 0, 0, 0, nil, nil, nil, nil, nil, nil, nil}}
@@ -329,6 +338,7 @@ func TestFirstSectors(t *testing.T) {
 }
 func TestFirstTimer(t *testing.T) {
 	t.Parallel()
+
 	tasks := []LevelStruct{
 		{270768, "rr1rr", 9, 0, 0, 0, false, false, StartTimeStruct{5}, false, 0, 1, 0, 1, 7, 2, 5, nil, nil, nil, nil, nil, nil, nil},
 		{270768, "rr2rr", 9, 100, 10, 60, false, false, StartTimeStruct{5}, false, 0, 1, 0, 1, 7, 2, 5, nil, nil, nil, nil, nil, nil, nil}}
@@ -342,6 +352,7 @@ func TestFirstTimer(t *testing.T) {
 }
 func TestFirstTask(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
@@ -362,6 +373,7 @@ func TestFirstTask(t *testing.T) {
 }
 func TestFirstHelps(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
@@ -386,6 +398,7 @@ func TestFirstHelps(t *testing.T) {
 }
 func TestFirstMessages(t *testing.T) {
 	t.Parallel()
+
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest()
 
@@ -421,6 +434,7 @@ func TestGameEngineModel(t *testing.T) {
 }
 func TestSendCodeJSON(t *testing.T) {
 	t.Parallel()
+
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
 
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -476,6 +490,7 @@ func TestSendCodeJSON(t *testing.T) {
 }
 func TestEnterGameENJSON(t *testing.T) {
 	t.Parallel()
+
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{
 		Jar: cookieJar,
@@ -500,6 +515,7 @@ func TestEnterGameENJSON(t *testing.T) {
 func TestGetPenaltyJSON(t *testing.T) {
 	t.Parallel()
 	t.SkipNow()
+
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
 
 	webToBotTEST := make(chan MessengerStyle, 10)
@@ -535,6 +551,7 @@ func TestGetPenaltyJSON(t *testing.T) {
 
 func TestConvertTimeSec(t *testing.T) {
 	t.Parallel()
+
 	type testPair struct {
 		original int
 		replaced string
@@ -668,6 +685,8 @@ func TestSearchPhoto(t *testing.T) {
 	}
 }
 func TestConvertUTF(t *testing.T) {
+	t.Parallel()
+
 	type testPair struct {
 		original string
 		replaced string
@@ -782,7 +801,6 @@ func TestAnagram(t *testing.T) {
 	}
 }
 func TestSearchForMask(t *testing.T) {
-
 	t.Parallel()
 
 	type testPair struct {
@@ -933,7 +951,7 @@ func TestMorse(t *testing.T) {
 	}
 }
 func TestBrail(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 
 	type testPair struct {
 		original string
