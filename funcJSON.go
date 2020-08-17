@@ -588,23 +588,8 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 			// проверка, что уже отправляли
 			if bonusNew.SecondsToStart != old[numberNew].SecondsToStart {
 				// будет доступен через
-				str := ""
-				switch bonusNew.SecondsToStart {
-				case 60:
-					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
-				case 300:
-					str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
-				}
-				// истечет через
-				switch bonusNew.SecondsLeft {
-				case 60:
-					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
-				case 300:
-					str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
-				}
-				msgBot.ChannelMessage = str
+				msgBot.ChannelMessage = timeToBonuses(bonusNew)
 				webToBot <- msgBot
-				msgBot.ChannelMessage = ""
 			}
 		} else {
 			str = fmt.Sprintf("&#11088;<b>Новый бонус</b> %s №%d\n%s\n", bonusNew.Name, bonusNew.Number, replaceTag(bonusNew.Task, gameConf.SubUrl))
@@ -625,24 +610,10 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 			//if text have img
 			sendPhoto(searchPhoto(bonusNew.Help), webToBot)
 			// будет доступен через
-			str := ""
-			switch bonusNew.SecondsToStart {
-			case 60:
-				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
-			case 300:
-				str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
-			}
-			// истечет через
-			switch bonusNew.SecondsLeft {
-			case 60:
-				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonusNew.Name, bonusNew.Number)
-			case 300:
-				str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonusNew.Name, bonusNew.Number)
-			}
-			msgBot.ChannelMessage = str
+			msgBot.ChannelMessage = timeToBonuses(bonusNew)
 			webToBot <- msgBot
-			msgBot.ChannelMessage = ""
 		}
+		msgBot.ChannelMessage = ""
 	}
 }
 func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {

@@ -581,3 +581,19 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 	}
 	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 }
+
+func timeToBonuses(bonus BonusesStruct) (str string) {
+	switch bonus.SecondsToStart {
+	case 60:
+		str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonus.Name, bonus.Number)
+	case 300:
+		str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonus.Name, bonus.Number)
+	}
+	switch bonus.SecondsLeft {
+	case 60:
+		str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonus.Name, bonus.Number)
+	case 300:
+		str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonus.Name, bonus.Number)
+	}
+	return str
+}
