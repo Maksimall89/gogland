@@ -380,7 +380,7 @@ func main() {
 		case "ana":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, anagram(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, searchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
 				}
@@ -396,7 +396,7 @@ func main() {
 		case "smask":
 			go func() {
 				if len(update.Message.CommandArguments()) > 1 {
-					_ = sendMessageTelegram(chatId, searchForMask(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, searchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
 				}
