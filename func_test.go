@@ -45,8 +45,7 @@ func TestAddUser(t *testing.T) {
 	confGameENJSON.initTest()
 
 	// ВЫХОД
-	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
-	_, _ = clientTEST.Get(str)
+	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
 	rightTask := []string{"&#10134;Не смогли найти игрока <b>ERROR_sedfsdfsdf0f5we4fwerwjiejf</b>", "&#10133;Добавили игрока <b>Maksimal_bot (158796)</b> в команду <b>banda_game (7274)</b>"}
 
@@ -421,8 +420,7 @@ func TestGameEngineModel(t *testing.T) {
 	confGameENJSON.initTest()
 
 	// ВЫХОД
-	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
-	_, _ = clientTEST.Get(str)
+	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
 	enterGameJSON(clientTEST, confGameENJSON)
 	answer := gameEngineModel(clientTEST, confGameENJSON)
@@ -447,8 +445,7 @@ func TestSendCodeJSON(t *testing.T) {
 	confGameENJSON.initTest()
 
 	// ВЫХОД
-	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
-	_, _ = clientTEST.Get(str)
+	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
 	enterGameJSON(clientTEST, confGameENJSON)
 	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
@@ -465,8 +462,8 @@ func TestSendCodeJSON(t *testing.T) {
 		if msgChanel.ChannelMessage == "" {
 			return
 		}
-		if msgChanel.ChannelMessage != "Код &#10060;<b>НЕВЕРНЫЙ</b>" {
-			t.Error("КОД ОТПРАВЛЕН С ОШИБКОЙ! Мы получили: ", msgChanel.ChannelMessage, "\n Мы ждали: Код &#10060;<b>НЕВЕРНЫЙ</b>")
+		if msgChanel.ChannelMessage != fmt.Sprintf("Код %s &#10060;<b>НЕВЕРНЫЙ</b>", code) {
+			t.Error("КОД ОТПРАВЛЕН С ОШИБКОЙ! Мы получили: ", msgChanel.ChannelMessage, fmt.Sprintf("\n Мы ждали: Код %s &#10060;<b>НЕВЕРНЫЙ</b>", code))
 		}
 	default:
 	}
@@ -498,8 +495,7 @@ func TestEnterGameENJSON(t *testing.T) {
 	confGameENJSON.initTest()
 
 	// ВЫХОД
-	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
-	_, _ = clientTEST.Get(str)
+	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
 	answer := enterGameJSON(clientTEST, confGameENJSON)
 
@@ -528,8 +524,7 @@ func TestGetPenaltyJSON(t *testing.T) {
 	confGameENJSON.initTest()
 
 	// ВЫХОД
-	str := fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl)
-	_, _ = clientTEST.Get(str)
+	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
 	enterGameJSON(clientTEST, confGameENJSON)
 	getPenaltyJSON(clientTEST, &confGameENJSON, "1111", webToBotTEST)

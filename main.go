@@ -112,6 +112,7 @@ func main() {
 	isAnswerBlock = false // pass for enter code
 	isWork = false        // state work bot
 	isBonus := new(bool)  // code bonus
+	gameNotStart := "Игра ещё не началась."
 
 	// main cycle
 	for {
@@ -136,7 +137,7 @@ func main() {
 				} else {
 					buffer.TextToChat = msgChannel.ChannelMessage
 				}
-				_ = sendMessageTelegram(chatId, msgChannel.ChannelMessage, 0, bot)
+				_ = sendMessageTelegram(chatId, msgChannel.ChannelMessage, msgChannel.MsgId, bot)
 			}
 		default:
 			break
@@ -186,21 +187,21 @@ func main() {
 				*isBonus = true
 				go sendCodeJSON(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "pause":
 			if isWork {
 				isAnswerBlock = true
 				_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "resume":
 			if isWork {
 				isAnswerBlock = false
 				_ = sendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
@@ -262,7 +263,7 @@ func main() {
 					}
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "penalty":
 			if isWork {
@@ -274,7 +275,7 @@ func main() {
 					}
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "codesall":
 			//codesall - оставшиеся + снятые коды.
@@ -283,7 +284,7 @@ func main() {
 					_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, false), 0, bot)
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "codes":
 			///codes - оставшиеся коды.
@@ -292,7 +293,7 @@ func main() {
 					_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, true), 0, bot)
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "task":
 			if isWork {
@@ -300,7 +301,7 @@ func main() {
 					_ = sendMessageTelegram(chatId, getFirstTask(bufModel.Level.Tasks, confJSON), 0, bot)
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "msg":
 			if isWork {
@@ -313,7 +314,7 @@ func main() {
 					}
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "timer":
 			if isWork {
@@ -321,15 +322,7 @@ func main() {
 					_ = sendMessageTelegram(chatId, getFirstTimer(bufModel.Level), 0, bot)
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
-			}
-		case "time":
-			if isWork {
-				go func() {
-					_ = sendMessageTelegram(chatId, getFirstTimer(bufModel.Level), 0, bot)
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "add":
 			go func() {
@@ -345,7 +338,7 @@ func main() {
 					}
 				}()
 			} else {
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
 		case "joke":
 			if len(configuration.Jokes) > 0 {
@@ -455,27 +448,22 @@ func main() {
 			}()
 
 			if isWork {
-				// WTF symbol what i need ignore
+				// WTF symbol what I need ignore
 				if strings.ContainsAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") {
 					break
 				}
-
 				// check  codes
-				if strings.HasPrefix(update.Message.Text, "!") || strings.HasPrefix(update.Message.Text, "?") || strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789") {
+				if strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789!?") {
 					*isBonus = false
-					if isAnswerBlock {
-						if (update.Message.Text[0:1] == "!") || (update.Message.Text[0:1] == "?") {
-							go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
-						} else {
-							_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
+					if !isAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
+						arrCodes := strings.Split(update.Message.Text, "\n")
+						for _, code := range arrCodes {
+							go sendCodeJSON(&client, &confJSON, code, isBonus, webToBot, update.Message.MessageID)
 						}
 					} else {
-						go sendCodeJSON(&client, &confJSON, update.Message.Text, isBonus, webToBot, update.Message.MessageID)
+						_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
 					}
-					break
 				}
-			} else {
-				break
 			}
 		}
 	}

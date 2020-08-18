@@ -147,18 +147,23 @@ func sendCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonu
 		var resp *http.Response
 		var err error
 		var errCounter int8
+
 		for errCounter = 0; errCounter < 5; errCounter++ {
+			formData := url.Values{}
+			formData.Add("LevelId", fmt.Sprintf("%d", ModelState.Level.LevelId))
+			formData.Add("LevelNumber", fmt.Sprintf("%d", ModelState.Level.Number))
 			if *isBonus {
-				resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "BonusAction.Answer": {code}})
+				formData.Add("BonusAction.Answer", code)
 			} else {
 				if !ModelState.Level.HasAnswerBlockRule || ModelState.Level.BlockDuration <= 0 {
-					resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), url.Values{"LevelId": {fmt.Sprintf("%d", ModelState.Level.LevelId)}, "LevelNumber": {fmt.Sprintf("%d", ModelState.Level.Number)}, "LevelAction.Answer": {code}})
+					formData.Add("LevelAction.Answer", code)
 				} else {
 					msgBot.ChannelMessage = fmt.Sprintf("&#128219;<b>Ограничение на ввод.</b>\nЯ не смог отправить код&#128546;\nВы сможете ввести код через %s", convertTimeSec(ModelState.Level.BlockDuration))
 					webToBot <- msgBot
 					return
 				}
 			}
+			resp, err = client.PostForm(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1/", game.SubUrl, game.Gid), formData)
 			if err != nil || resp == nil {
 				log.Println("Ошибка при отправке кода 1.")
 				log.Println(err)
@@ -208,13 +213,12 @@ func sendCodeJSON(client *http.Client, game *ConfigGameJSON, code string, isBonu
 				webToBot <- msgBot
 				return
 			}
-
 			if bodyJSON.EngineAction.LevelAction.IsCorrectAnswer {
-				msgBot.ChannelMessage = "Код &#9989;<b>ВЕРНЫЙ</b>"
+				msgBot.ChannelMessage = fmt.Sprintf("Код %s &#9989;<b>ВЕРНЫЙ</b>", code)
 				webToBot <- msgBot
 				return
 			}
-			msgBot.ChannelMessage = "Код &#10060;<b>НЕВЕРНЫЙ</b>"
+			msgBot.ChannelMessage = fmt.Sprintf("Код %s &#10060;<b>НЕВЕРНЫЙ</b>", code)
 			webToBot <- msgBot
 			return
 		}
