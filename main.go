@@ -185,7 +185,7 @@ func main() {
 		case "b":
 			if isWork {
 				*isBonus = true
-				go sendCodeJSON(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
+				go sendCode(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 			} else {
 				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
 			}
@@ -458,7 +458,7 @@ func main() {
 					if !isAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
 						arrCodes := strings.Split(update.Message.Text, "\n")
 						for _, code := range arrCodes {
-							go sendCodeJSON(&client, &confJSON, code, isBonus, webToBot, update.Message.MessageID)
+							go sendCode(&client, &confJSON, code, isBonus, webToBot, update.Message.MessageID)
 						}
 					} else {
 						_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)

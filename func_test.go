@@ -422,7 +422,7 @@ func TestGameEngineModel(t *testing.T) {
 	// ВЫХОД
 	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
-	enterGameJSON(clientTEST, confGameENJSON)
+	enterGame(clientTEST, confGameENJSON)
 	answer := gameEngineModel(clientTEST, confGameENJSON)
 	if answer.Event != 0 {
 		t.Error("Игра НЕ в нормальном состоянии! Код ошибки: ", answer.Event)
@@ -447,14 +447,14 @@ func TestSendCodeJSON(t *testing.T) {
 	// ВЫХОД
 	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
-	enterGameJSON(clientTEST, confGameENJSON)
+	enterGame(clientTEST, confGameENJSON)
 	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
 
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
 	isBonus := new(bool)
 	*isBonus = false
 
-	sendCodeJSON(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
+	sendCode(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
@@ -469,7 +469,7 @@ func TestSendCodeJSON(t *testing.T) {
 	}
 
 	*isBonus = true
-	sendCodeJSON(clientTEST, &confGameENJSON, code+"_bonus", isBonus, webToBotTEST, 0)
+	sendCode(clientTEST, &confGameENJSON, code+"_bonus", isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
@@ -497,7 +497,7 @@ func TestEnterGameENJSON(t *testing.T) {
 	// ВЫХОД
 	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
-	answer := enterGameJSON(clientTEST, confGameENJSON)
+	answer := enterGame(clientTEST, confGameENJSON)
 
 	if answer != fmt.Sprintf("&#10004;<b>Авторизация прошла успешно</b> на игру: %s", confGameENJSON.URLGame) {
 		t.Error(
@@ -526,7 +526,7 @@ func TestGetPenaltyJSON(t *testing.T) {
 	// ВЫХОД
 	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
 
-	enterGameJSON(clientTEST, confGameENJSON)
+	enterGame(clientTEST, confGameENJSON)
 	getPenaltyJSON(clientTEST, &confGameENJSON, "1111", webToBotTEST)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web

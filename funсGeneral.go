@@ -466,7 +466,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		}
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -475,7 +475,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 
@@ -501,7 +501,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		resp, err = client.Get(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx", game.SubUrl))
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -510,7 +510,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 		if regexpCaptain.MatchString(string(body)) {
@@ -523,7 +523,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 				break
 			}
 		}
-		enterGameJSON(client, *game)
+		enterGame(client, *game)
 		isErrAdd = true
 	}
 
@@ -548,7 +548,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formData)
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -557,7 +557,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGameJSON(client, *game)
+			enterGame(client, *game)
 			continue
 		}
 		if reg, _ := regexp.MatchString(fmt.Sprintf(`uid=%s">%s</a></td>\s+<td class="padL10">`, user.userID, user.userName), string(body)); reg {
@@ -577,7 +577,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			}
 			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 		}
-		enterGameJSON(client, *game)
+		enterGame(client, *game)
 	}
 	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 }
