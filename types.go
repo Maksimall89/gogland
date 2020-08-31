@@ -23,22 +23,33 @@ func (conf *ConfigGameJSON) init(str string) string {
 
 	return ""
 }
-
 func (conf *ConfigGameJSON) separateURL() {
 	pathUrl := strings.Split(conf.URLGame, "/")
-	if len(pathUrl) > 1 {
+	if len(pathUrl) > 2 {
 		conf.SubUrl = pathUrl[2]
 	}
-	pathUrl = strings.Split(conf.URLGame, "=")
-	if len(pathUrl) > 0 {
-		conf.Gid = pathUrl[1]
+	if len(pathUrl) == 2 {
+		conf.SubUrl = pathUrl[0]
+	}
+	pathGid := strings.Split(conf.URLGame, "=")
+	if len(pathGid) > 1 {
+		conf.Gid = pathGid[1]
 	}
 }
-
+func (conf *ConfigBot) setEnv() {
+	if value, exists := os.LookupEnv("TelegramBotToken"); exists {
+		conf.TelegramBotToken = value
+	}
+	if value, exists := os.LookupEnv("OwnName"); exists {
+		conf.OwnName = value
+	}
+}
 func (conf *ConfigBot) init(path string) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Println(err)
+		conf.setEnv()
+		return
 	}
 	defer file.Close()
 	decoder := json.NewDecoder(file)
@@ -46,12 +57,47 @@ func (conf *ConfigBot) init(path string) {
 	if err != nil {
 		log.Println(err)
 	}
-	if value, exists := os.LookupEnv("TelegramBotToken"); exists {
-		conf.TelegramBotToken = value
+	conf.setEnv()
+}
+
+// config.json
+func (conf *ConfigGameJSON) initTest(path string) {
+	var configuration ConfigBot
+	configuration.init(path)
+
+	if value, exists := os.LookupEnv("TestNickName"); exists {
+		conf.NickName = value
+	} else {
+		conf.NickName = configuration.TestNickName
 	}
-	if value, exists := os.LookupEnv("OwnName"); exists {
-		conf.OwnName = value
+	if value, exists := os.LookupEnv("TestPassword"); exists {
+		conf.Password = value
+	} else {
+		conf.Password = configuration.TestPassword
 	}
+	if value, exists := os.LookupEnv("TestURLGame"); exists {
+		conf.URLGame = value
+	} else {
+		conf.URLGame = configuration.TestURLGame
+	}
+
+	conf.separateURL()
+}
+func initLocationTest(maps map[string]float64) {
+	maps["Latitude0"] = 40.2522222
+	maps["Longitude0"] = 58.4363889
+
+	maps["Latitude1"] = 40.167841
+	maps["Longitude1"] = 58.410761
+
+	maps["Latitude2"] = 40.167845
+	maps["Longitude2"] = 58.410765
+
+	maps["Latitude3"] = 59.413521
+	maps["Longitude3"] = 58.410761
+
+	maps["Latitude4"] = 56.84471667
+	maps["Longitude4"] = 53.19626667
 }
 
 /*
@@ -86,8 +132,8 @@ type ConfigGameJSON struct {
 	SubUrl      string
 	Gid         string
 	LevelNumber int64
-	Postfix     string
 	Prefix      string
+	Postfix     string
 }
 
 type Coordinate struct {

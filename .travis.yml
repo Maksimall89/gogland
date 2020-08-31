@@ -1,7 +1,7 @@
 language: go
 
 go:
-  - 1.14.x
+  - 1.15.x
 
 jobs:
   include:
@@ -10,7 +10,11 @@ jobs:
       script: go build -v
     - stage: "Tests"
       name: "Unit Tests"
-      script: go test -v
+      script:
+        - go test -v -run Types
+        - go test -v -run General
+        - go test -v -run Help
+        - go test -v -run Engine
     - stage: "Code Quality"
       name: "Code Quality Analysis"
       before_script:

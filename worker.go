@@ -24,7 +24,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 	msgBot.MsgId = 0
 
 	// Заходим в движок
-	msgBot.ChannelMessage = enterGameJSON(client, *game)
+	msgBot.ChannelMessage = enterGame(client, *game)
 	webToBot <- msgBot
 
 	// Получаем актуальное состояние игры
@@ -54,7 +54,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 						str = "Не смогу получить состояние игры..."
 						isPromblemStart = true
 					}
-					enterGameJSON(client, *game)
+					enterGame(client, *game)
 					break
 				}
 			case 1:
@@ -105,7 +105,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				str = "&#9940;Таймаут уровня!"
 			default:
 				str = "&#9940;Проблемы с игрой...."
-				enterGameJSON(client, *game)
+				enterGame(client, *game)
 			}
 
 			if str == bufStr {
@@ -145,7 +145,7 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 
 			// если мы не на уровне или что-то пошло не так
 			if modelGame.Event != 0 && modelGame.GameId == 0 || modelGame.Level.Number == 0 {
-				enterGameJSON(client, *game)
+				enterGame(client, *game)
 				continue
 			}
 

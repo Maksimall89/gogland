@@ -12,81 +12,42 @@ import (
 	"strings"
 )
 
-// other functional
-// type for https://anagram.poncy.ru
-type ObjPoncy struct {
-	Index    bool   `json:"index"`
-	MainPage bool   `json:"main_page"`
-	H1       string `json:"h1"`
-	Title    string `json:"title"`
-	H1s      string `json:"h1s"`
-	DescMain string `json:"desc_main"`
-	Desc     string `json:"desc"`
-}
-type AnswerPoncy struct {
-	Url             string   `json:"url"`
-	Result          []string `json:"result"`
-	PageDescription ObjPoncy `json:"page_description"`
-}
-
-func anagram(text string) string {
+func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
+	var answer struct {
+		URL             string `json:"url"`
+		PageDescription struct {
+			Index    bool   `json:"index"`
+			H1       string `json:"h1"`
+			MainPage bool   `json:"main_page"`
+			Title    string `json:"title"`
+			H1S      string `json:"h1s"`
+			DescMain string `json:"desc_main"`
+			Desc     string `json:"desc"`
+		} `json:"page_description"`
+		Result []string `json:"result"`
+	}
 	// create cookie
 	cookieJar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Jar: cookieJar,
 	}
 
-	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=" + text + "&answer_type=1")
-	if err != nil {
-		log.Println(err)
-		return "Ошибка отправки запроса."
-	}
-	// read from body
-	body, err := ioutil.ReadAll(resp.Body)
-	_ = resp.Body.Close()
-	if err != nil {
-		log.Println(string(body))
-		log.Println(err)
-		return "Не могу распарсить."
-	}
-
-	var answer AnswerPoncy // срез байт входных, куда кладём
-	err = json.Unmarshal(body, &answer)
-	if err != nil {
-		log.Println(err)
-		return "Не могу распарсить JSON."
-	}
-
-	var str string
-	if len(answer.Result) > 0 {
-		for _, item := range answer.Result {
-			if len(str) > 1300 {
-				break
-			}
-			str += item + " "
-		}
+	if isAnagram {
+		// search on anagram
+		str = "1"
 	} else {
-		str = "<b>Слов не обнаружено.</b>"
-	}
-	return str
-}
-func searchForMask(text string) string {
-	// create cookie
-	cookieJar, _ := cookiejar.New(nil)
-	client := &http.Client{
-		Jar: cookieJar,
+		// search on mask
+		str = "4"
+		// replace input text for the site
+		text = strings.Replace(text, "*", "%", 2)
+		text = strings.Replace(text, "?", "*", 2)
 	}
 
-	// replace input text for the site
-	text = strings.Replace(text, "*", "%", 2)
-	text = strings.Replace(text, "?", "*", 2)
-
-	resp, err := client.Get("https://anagram.poncy.ru/anagram-decoding.cgi?name=words_by_mask_index&inword=" + text + "&answer_type=4")
+	resp, err := client.Get(fmt.Sprintf("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=%s&answer_type=%s", text, str))
 	if err != nil {
 		log.Println(err)
-		return "Ошибка отправки запроса."
+		return "<b>Слов не обнаружено.</b>"
 	}
-
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
 	_ = resp.Body.Close()
@@ -95,17 +56,14 @@ func searchForMask(text string) string {
 		log.Println(err)
 		return "Не могу распарсить."
 	}
-
-	var answer AnswerPoncy
 	// срез байт входных, куда кладём
 	err = json.Unmarshal(body, &answer)
 	if err != nil {
 		log.Println(err)
 		return "Не могу распарсить JSON."
 	}
-
-	var str string
 	if len(answer.Result) > 0 {
+		str = ""
 		for _, item := range answer.Result {
 			if len(str) > 1300 {
 				break
@@ -118,27 +76,22 @@ func searchForMask(text string) string {
 	return str
 }
 func associations(text string) string {
-	type ObjSocialistic struct {
-		Name              string  `json:"name"`
-		PopularityInverse int     `json:"popularity_inverse"`
-		AssociationsCount int     `json:"associations_count"`
-		PopularityDirect  int     `json:"popularity_direct"`
-		Popularity        float64 `json:"popularity"`
-		WordPopularity    float64 `json:"word_popularity"`
-		Weight            float64 `json:"weight"`
-		Positivity        float64 `json:"positivity"`
-	}
 	var answer struct {
-		Associations []struct{ ObjSocialistic } `json:"associations"`
-		Word         string                     `json:"word"`
+		Associations []struct {
+			Name              string  `json:"name"`
+			Weight            float64 `json:"weight"`
+			Positivity        float64 `json:"positivity"`
+			PopularityInverse int     `json:"popularity_inverse"`
+			Popularity        float64 `json:"popularity"`
+			AssociationsCount int     `json:"associations_count"`
+			PopularityDirect  int     `json:"popularity_direct"`
+			WordPopularity    float64 `json:"word_popularity"`
+		} `json:"associations"`
+		Word string `json:"word"`
 	}
 
-	// create cookie
-	cookieJar, _ := cookiejar.New(nil)
-	client := &http.Client{
-		Jar: cookieJar,
-	}
-	resp, err := client.PostForm("http://sociation.org/ajax/word_associations/", url.Values{"max_count": {"0"}, "back": {"false"}, "word": {text}})
+	client := &http.Client{}
+	resp, err := client.PostForm("https://sociation.org/ajax/word_associations/", url.Values{"max_count": {"100"}, "back": {"false"}, "word": {text}})
 	if err != nil {
 		log.Println(err)
 		return "Ошибка отправки запроса."
@@ -159,22 +112,18 @@ func associations(text string) string {
 		return "Не могу распарсить JSON."
 	}
 
-	var str string
+	text = ""
 	if len(answer.Associations) > 0 {
 		for _, item := range answer.Associations {
-			if len(str) > 1300 {
-				break
-			}
-			str += item.Name + " "
+			text += item.Name + " "
 		}
 	} else {
-		str = "<b>Слов не обнаружено.</b>"
+		text = "<b>Слов не обнаружено.</b>"
 	}
 
-	return str
+	return text
 }
 func tableMendeleev(text string) string {
-
 	var attributeSearch bool
 	type table struct {
 		name      string
@@ -794,7 +743,6 @@ func bin(text string, attribute bool) string {
 	return text
 }
 func transferToAlphabet(text string, types bool) string {
-
 	rusAlphabet := []string{"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
 	engAlphabet := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "-", "-", "-", "-", "-", "-"}
 
@@ -881,7 +829,7 @@ func translateQwerty(text string) string {
 		{"/", "."},
 	}
 
-	arrText := strings.Split(text, " ")
+	arrText := strings.Split(strings.ToLower(text), " ")
 	var attribute bool
 
 	text = ""
