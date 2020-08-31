@@ -60,10 +60,9 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 	bodyJSON := &Model{}
 
-	enterGame(client, game)
-
 	// 3 Попытки
 	for counter = 0; counter < 3; counter++ {
+		enterGame(client, game)
 		resp, err := client.Get(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1", game.SubUrl, game.Gid))
 		if err != nil || resp == nil {
 			continue
@@ -72,12 +71,10 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			enterGame(client, game)
 			continue
 		}
 
 		if strings.Contains(string(body), `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">`) {
-			enterGame(client, game)
 			continue
 		}
 
@@ -85,7 +82,6 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 		if err != nil {
 			log.Println(err)
 			log.Println(string(body))
-			enterGame(client, game)
 			continue
 		}
 		return *bodyJSON
@@ -236,11 +232,11 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 	var str string
 
 	for errCounter = 0; errCounter < 5; errCounter++ {
+		enterGame(client, *game)
 		resp, err := client.Get(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1&pid=%s&pact=1", game.SubUrl, game.Gid, penaltyID))
 		if err != nil || resp == nil {
 			log.Println("Ошибка при взятии штрафной подсказки 1.")
 			log.Println(err)
-			enterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -251,11 +247,9 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 			log.Println("Ошибка при взятии штрафной подсказки 2.")
 			log.Println(string(body))
 			log.Println(err)
-			enterGame(client, *game)
 			continue
 		}
 		if strings.Contains(string(body), `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">`) {
-			enterGame(client, *game)
 			continue
 		}
 
@@ -264,7 +258,6 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 		if err != nil {
 			log.Println("Ошибка генерации JSON.")
 			log.Println(err)
-			enterGame(client, *game)
 			continue
 		}
 
