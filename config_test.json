@@ -1,0 +1,10 @@
+{
+  "TestNickName": "userTEST",
+  "TestPassword": "passTEST",
+  "TestURLGame": "http://demo.en.cx/GameDetails.aspx?gid=1",
+  "TelegramBotToken": "tokenTEST",
+  "OwnName": "nickOwnTEST",
+  "Jokes": [
+    "Какой капитан, такая и команда!"
+  ]
+}

@@ -205,7 +205,7 @@ func main() {
 			}
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
-				getPenaltyJSON(&client, &confJSON, update.Message.Text, webToBot)
+				getPenalty(&client, &confJSON, update.Message.Text, webToBot)
 			} else {
 				_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
 			}

@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"gopkg.in/telegram-bot-api.v4"
-	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
 	"net/url"
 	"os"
 	"regexp"
@@ -208,7 +206,6 @@ func sendPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
 	}
 
 	msgBot := MessengerStyle{}
-	msgBot.ChannelMessage = ""
 	msgBot.MsgId = 0
 	for i := 0; i < len(photoMap); i++ {
 		msgBot.ChannelMessage = photoMap[i]
@@ -438,162 +435,4 @@ func convertTimeSec(times int) string {
 		return fmt.Sprintf("%d секунд", times)
 	}
 	return strings.TrimSpace(str)
-}
-
-func addUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
-
-	var resp *http.Response
-	var body []byte
-	var err error
-	var errCounter int8
-	var isErrAdd = false
-	var isCapitan = true
-	var strArr []string
-
-	var user struct {
-		userID   string
-		userName string
-		teamID   string
-		teamName string
-	}
-
-	// Получение ника и id команды
-	for errCounter = 0; errCounter < 5; errCounter++ {
-		if strings.ContainsAny(strings.ToLower(inputString), "abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя") {
-			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {inputString}, "PlayerID": {""}})
-		} else {
-			resp, err = client.PostForm(fmt.Sprintf("http://%s/PlayerSearch.aspx", game.SubUrl), url.Values{"PlayerName": {""}, "PlayerID": {inputString}})
-		}
-		if err != nil || resp == nil {
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-		defer resp.Body.Close()
-
-		body, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(string(body))
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-
-		strArr = regexp.MustCompile(`uid=(\d+)" id="SearchResultUsers_UserRepeater_ctl00_lnkLogin" target="_blank">(.+?)</a>`).FindStringSubmatch(string(body))
-		if len(strArr) > 0 {
-			user.userID = strArr[1]
-			user.userName = strArr[2]
-			isErrAdd = false
-			break
-		}
-		isErrAdd = true
-	}
-
-	if isErrAdd {
-		return fmt.Sprintf("&#10134;Не смогли найти игрока <b>%s</b>", inputString)
-	}
-
-	// Получение id команды
-	regexpCaptain, _ := regexp.Compile(`"return ToggleTeamMenu\(1\);" href="/Teams/TeamDetails\.aspx\?mode=mng">\w+</a>`)
-	regexpTeamId, _ := regexp.Compile(`href="/Teams/TeamDetails\.aspx\?tid=(\d+)">(.+?)</a>`)
-
-	for errCounter = 0; errCounter < 5; errCounter++ {
-		resp, err = client.Get(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx", game.SubUrl))
-		if err != nil || resp == nil {
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-		defer resp.Body.Close()
-
-		body, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(string(body))
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-		if regexpCaptain.MatchString(string(body)) {
-			isCapitan = true
-			strArr = regexpTeamId.FindStringSubmatch(string(body))
-			if len(strArr) > 0 {
-				user.teamID = strArr[1]
-				user.teamName = strArr[2]
-				isErrAdd = false
-				break
-			}
-		}
-		enterGame(client, *game)
-		isErrAdd = true
-	}
-
-	if !isCapitan {
-		return fmt.Sprintf("&#10134;Игрок, под которым запущен бот <b>%s не имеет прав капитана!</b>", game.NickName)
-	}
-	if isErrAdd {
-		return fmt.Sprintf("&#10134;Не смогли получить id команды для игрока <b>%s</b>", user.userName)
-	}
-
-	// Добавление игрока, установка галки
-	for errCounter = 0; errCounter < 5; errCounter++ {
-		formData := url.Values{}
-		formData.Add("NewMember", user.userName)
-		formData.Add("ctl06_content_ctl00_btnInvite.x", "1")
-		formData.Add("ctl06_content_ctl00_btnInvite.y", "1")
-		strArr = regexp.MustCompile(`name="cbxCheck_(\d+)" checked="checked" class='enCheckBox input'`).FindStringSubmatch(string(body))
-		for _, value := range strArr {
-			formData.Add(fmt.Sprintf("cbxCheck_%s", value), "on")
-		}
-
-		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formData)
-		if err != nil || resp == nil {
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-		defer resp.Body.Close()
-
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(string(body))
-			log.Println(err)
-			enterGame(client, *game)
-			continue
-		}
-		if reg, _ := regexp.MatchString(fmt.Sprintf(`uid=%s">%s</a></td>\s+<td class="padL10">`, user.userID, user.userName), string(body)); reg {
-			if reg, _ := regexp.MatchString(fmt.Sprintf(`name="cbxCheck_%s" class='enCheckBox input`, user.userID), string(body)); reg {
-				formDataCheckBox := url.Values{}
-				formDataCheckBox.Add("NewMember", "")
-				formDataCheckBox.Add("ctl06_content_ctl00_btnUpdateMember.x", "1")
-				formDataCheckBox.Add("ctl06_content_ctl00_btnUpdateMember.y", "1")
-				formDataCheckBox.Add(fmt.Sprintf("cbxCheck_%s", user.userID), "on")
-
-				strArr = regexp.MustCompile(`name="cbxCheck_(\d+)" checked="checked" class='enCheckBox input'`).FindStringSubmatch(string(body))
-				for _, value := range strArr {
-					formDataCheckBox.Add(fmt.Sprintf("cbxCheck_%s", value), "on")
-				}
-				_, _ = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formDataCheckBox)
-				continue
-			}
-			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
-		}
-		enterGame(client, *game)
-	}
-	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
-}
-
-func timeToBonuses(bonus BonusesStruct) (str string) {
-	switch bonus.SecondsToStart {
-	case 60:
-		str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonus.Name, bonus.Number)
-	case 300:
-		str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 5&#8419; минут.\n", bonus.Name, bonus.Number)
-	}
-	switch bonus.SecondsLeft {
-	case 60:
-		str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 1&#8419; минуту.\n", bonus.Name, bonus.Number)
-	case 300:
-		str += fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d исчезнет через 5&#8419; минут.\n", bonus.Name, bonus.Number)
-	}
-	return str
 }
