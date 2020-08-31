@@ -512,7 +512,7 @@ func TestEngineCompareTasks(t *testing.T) {
 }
 func TestEngineAddUser(t *testing.T) {
 	t.Parallel()
-	t.Skip("Test need real new member for team")
+	t.Skipped()
 
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{
