@@ -115,12 +115,11 @@ func TestGeneralSendPhoto(t *testing.T) {
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 	photoMap := make(map[int]string)
-	photoMap[0] = ``
-	photoMap[1] = `<img src="y.img">`
-	photoMap[2] = `qwerty`
+	arrPhotos := []string{``, `<img src="y.img">`, `qwerty`}
 
-	sendPhoto(photoMap, webToBotTEST)
-	for number, photo := range photoMap {
+	for _, photo := range arrPhotos {
+		photoMap[0] = photo
+		sendPhoto(photoMap, webToBotTEST)
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
 		case msgChanel = <-webToBotTEST:
@@ -129,7 +128,7 @@ func TestGeneralSendPhoto(t *testing.T) {
 				t.Error("Error message type")
 			}
 			if msgChanel.ChannelMessage != photo {
-				t.Errorf("For %s\nexpected %s\ngot %s", msgChanel.ChannelMessage, photo, photoMap[number])
+				t.Errorf("For %s\nexpected %s\ngot %s", msgChanel.ChannelMessage, photo, photoMap[1])
 			}
 		default:
 		}
