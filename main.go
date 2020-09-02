@@ -219,7 +219,7 @@ func main() {
 			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
-			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
+			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") {
 				_ = sendMessageTelegram(chatId, confJSON.init(update.Message.CommandArguments()), 0, bot)
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 

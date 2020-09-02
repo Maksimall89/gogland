@@ -347,7 +347,6 @@ func round(num float64) int {
 	return int(num + math.Copysign(0.5, num))
 }
 func convertTimeSec(times int) string {
-
 	if times == 0 {
 		return "0 секунд"
 	}
@@ -359,7 +358,6 @@ func convertTimeSec(times int) string {
 	if timeHour > 0 {
 		timeMin = timeMin % 60
 	}
-
 	timeDay := times / 86400
 	if timeDay > 0 {
 		timeMin = times % 60
@@ -372,11 +370,7 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d день ", timeDay)
-	case 2:
-		str += fmt.Sprintf("%d дня ", timeDay)
-	case 3:
-		str += fmt.Sprintf("%d дня ", timeDay)
-	case 4:
+	case 2, 3, 4:
 		str += fmt.Sprintf("%d дня ", timeDay)
 	default:
 		str += fmt.Sprintf("%d дней ", timeDay)
@@ -387,11 +381,7 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d час ", timeHour)
-	case 2:
-		str += fmt.Sprintf("%d часа ", timeHour)
-	case 3:
-		str += fmt.Sprintf("%d часа ", timeHour)
-	case 4:
+	case 2, 3, 4:
 		str += fmt.Sprintf("%d часа ", timeHour)
 	default:
 		str += fmt.Sprintf("%d часов ", timeHour)
@@ -402,11 +392,7 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d минута ", timeMin)
-	case 2:
-		str += fmt.Sprintf("%d минуты ", timeMin)
-	case 3:
-		str += fmt.Sprintf("%d минуты ", timeMin)
-	case 4:
+	case 2, 3, 4:
 		str += fmt.Sprintf("%d минуты ", timeMin)
 	default:
 		str += fmt.Sprintf("%d минут ", timeMin)
@@ -417,19 +403,10 @@ func convertTimeSec(times int) string {
 		str += ""
 	case 1:
 		str += fmt.Sprintf("%d секунда", timeSec)
-	case 2:
-		str += fmt.Sprintf("%d секунды", timeSec)
-	case 3:
-		str += fmt.Sprintf("%d секунды", timeSec)
-	case 4:
+	case 2, 3, 4:
 		str += fmt.Sprintf("%d секунды", timeSec)
 	default:
 		str += fmt.Sprintf("%d секунд", timeSec)
-	}
-
-	// если не смогли распарсить
-	if str == "" {
-		return fmt.Sprintf("%d секунд", times)
 	}
 	return strings.TrimSpace(str)
 }
