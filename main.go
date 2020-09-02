@@ -143,29 +143,26 @@ func main() {
 		// В канал updates будут приходить все новые сообщения from telegram
 		select {
 		case update = <-updates:
-			if !isWork {
-				chatId = update.Message.Chat.ID
-			} else {
-				// Если пишут в другой чат ему, то игнор
-				if chatId != update.Message.Chat.ID {
-					continue
-				}
-			}
 			if update.Message == nil || update.Message.Text == "" || reflect.TypeOf(update.Message.Text).Kind() != reflect.String {
 				continue
 			}
-			break
 		default:
 			continue
 		}
 
 		if !isWork {
+			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
 			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
 				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
 				continue
 			default:
-
+				break
+			}
+		} else {
+			// Если пишут в другой чат ему, то игнор
+			if chatId != update.Message.Chat.ID {
+				continue
 			}
 		}
 
