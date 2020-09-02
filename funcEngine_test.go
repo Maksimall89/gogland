@@ -20,13 +20,10 @@ func TestEngineEnterGame(t *testing.T) {
 
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest("")
+	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 
-	// ВЫХОД
-	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
-
-	answer := enterGame(clientTEST, confGameENJSON)
-
-	if answer != fmt.Sprintf("&#10004;<b>Авторизация прошла успешно</b> на игру: %s", confGameENJSON.URLGame) {
+	result := enterGame(clientTEST, confGameENJSON)
+	if result != fmt.Sprintf("&#10004;<b>Авторизация прошла успешно</b> на игру: %s", confGameENJSON.URLGame) {
 		t.Errorf("Unable to log in for %v", confGameENJSON)
 	}
 }
@@ -39,13 +36,11 @@ func TestEngineGameEngineModel(t *testing.T) {
 	confGameENJSON := ConfigGameJSON{}
 	confGameENJSON.initTest(pathTest)
 
-	// ВЫХОД
-	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
-
+	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 	enterGame(clientTEST, confGameENJSON)
-	answer := gameEngineModel(clientTEST, confGameENJSON)
-	if answer.Event != 0 {
-		t.Error("Impossible to get game state. Error code: ", answer.Event)
+	result := gameEngineModel(clientTEST, confGameENJSON)
+	if result.Event != 0 {
+		t.Error("Impossible to get game state. Error code: ", result.Event)
 	}
 }
 func TestEngineSendCode(t *testing.T) {
@@ -62,9 +57,7 @@ func TestEngineSendCode(t *testing.T) {
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest(pathTest)
 
-	// ВЫХОД
-	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
-
+	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 	enterGame(clientTEST, confGameENJSON)
 	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
 
@@ -118,10 +111,7 @@ func TestEngineGetPenalty(t *testing.T) {
 
 	var confGameENJSON ConfigGameJSON
 	confGameENJSON.initTest(pathTest)
-
-	// ВЫХОД
-	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
-
+	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 	enterGame(clientTEST, confGameENJSON)
 	getPenalty(clientTEST, &confGameENJSON, penaltyID, webToBotTEST)
 
@@ -521,9 +511,7 @@ func TestEngineAddUser(t *testing.T) {
 	}
 	confGameENJSON := ConfigGameJSON{}
 	confGameENJSON.initTest(pathTest)
-
-	// ВЫХОД
-	_, _ = clientTEST.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", confGameENJSON.SubUrl))
+	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 
 	type testPair struct {
 		input  string
@@ -566,4 +554,9 @@ func TestEngineTimeToBonuses(t *testing.T) {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
 	}
+}
+
+// Exit from site
+func exitGameTest(client *http.Client, subUrl string) {
+	_, _ = client.Get(fmt.Sprintf("http://%s/Login.aspx?action=logout", subUrl))
 }

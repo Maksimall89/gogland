@@ -305,3 +305,20 @@ func TestGeneralConvertTimeSec(t *testing.T) {
 		}
 	}
 }
+
+func initLocationTest(maps map[string]float64) {
+	maps["Latitude0"] = 40.2522222
+	maps["Longitude0"] = 58.4363889
+
+	maps["Latitude1"] = 40.167841
+	maps["Longitude1"] = 58.410761
+
+	maps["Latitude2"] = 40.167845
+	maps["Longitude2"] = 58.410765
+
+	maps["Latitude3"] = 59.413521
+	maps["Longitude3"] = 58.410761
+
+	maps["Latitude4"] = 56.84471667
+	maps["Longitude4"] = 53.19626667
+}
