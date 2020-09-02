@@ -28,9 +28,6 @@ func logInit() {
 	if err != nil {
 		fmt.Printf("Error opening file: %v", err)
 	}
-	defer fileLog.Close()
-	defer log.Println(recover())
-
 	// assign it to the standard logger
 	log.SetOutput(fileLog)
 	log.SetPrefix("Gogland ")

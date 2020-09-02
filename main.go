@@ -13,13 +13,15 @@ import (
 	"time"
 )
 
-var bufModel Model
-var photoMap map[int]string
-var locationMap map[string]float64
-var cookieJar *cookiejar.Jar
-var client http.Client
-var isAnswerBlock bool
-var isWork bool
+var (
+	bufModel      Model
+	photoMap      map[int]string
+	locationMap   map[string]float64
+	cookieJar     *cookiejar.Jar
+	client        http.Client
+	isAnswerBlock bool
+	isWork        bool
+)
 
 func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 	_, _ = resp.Write([]byte("Hi there! I'm telegram bot @gogland_bot. My owner @maksimall89"))
@@ -32,6 +34,7 @@ func main() {
 
 	if os.Getenv("Gogland_logs") == "1" {
 		logInit()
+		defer log.Println(recover())
 	}
 
 	// web server for heroku
