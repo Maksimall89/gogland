@@ -2,6 +2,7 @@ package main
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ func TestGeneralLogInit(t *testing.T) {
 	}
 
 	logInit()
+	log.Println("TEST")
 
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
