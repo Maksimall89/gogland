@@ -13,13 +13,15 @@ import (
 	"time"
 )
 
-var bufModel Model
-var photoMap map[int]string
-var locationMap map[string]float64
-var cookieJar *cookiejar.Jar
-var client http.Client
-var isAnswerBlock bool
-var isWork bool
+var (
+	bufModel      Model
+	photoMap      map[int]string
+	locationMap   map[string]float64
+	cookieJar     *cookiejar.Jar
+	client        http.Client
+	isAnswerBlock bool
+	isWork        bool
+)
 
 func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 	_, _ = resp.Write([]byte("Hi there! I'm telegram bot @gogland_bot. My owner @maksimall89"))
@@ -32,6 +34,7 @@ func main() {
 
 	if os.Getenv("Gogland_logs") == "1" {
 		logInit()
+		defer log.Println(recover())
 	}
 
 	// web server for heroku
@@ -112,11 +115,9 @@ func main() {
 	isAnswerBlock = false // pass for enter code
 	isWork = false        // state work bot
 	isBonus := new(bool)  // code bonus
-	gameNotStart := "Игра ещё не началась."
 
 	// main cycle
 	for {
-
 		// В канал будут приходить все новые сообщения from web
 		select {
 		case msgChannel = <-webToBot:
@@ -145,20 +146,27 @@ func main() {
 		// В канал updates будут приходить все новые сообщения from telegram
 		select {
 		case update = <-updates:
-			if !isWork {
-				chatId = update.Message.Chat.ID
-			} else {
-				// Если пишут в другой чат ему, то игнор
-				if chatId != update.Message.Chat.ID {
-					continue
-				}
-			}
 			if update.Message == nil || update.Message.Text == "" || reflect.TypeOf(update.Message.Text).Kind() != reflect.String {
 				continue
 			}
-			break
 		default:
 			continue
+		}
+
+		if !isWork {
+			chatId = update.Message.Chat.ID
+			switch strings.ToLower(update.Message.Command()) {
+			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
+				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				continue
+			default:
+				break
+			}
+		} else {
+			// Если пишут в другой чат ему, то игнор
+			if chatId != update.Message.Chat.ID {
+				continue
+			}
 		}
 
 		switch strings.ToLower(update.Message.Command()) {
@@ -183,26 +191,13 @@ func main() {
 			confJSON.Prefix = update.Message.CommandArguments()
 			_ = sendMessageTelegram(chatId, "Префикс принят", 0, bot)
 		case "b":
-			if isWork {
-				*isBonus = true
-				go sendCode(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			*isBonus = true
+			go sendCode(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 		case "pause":
-			if isWork {
-				isAnswerBlock = true
-				_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			isAnswerBlock = true
+			_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
 		case "resume":
-			if isWork {
-				isAnswerBlock = false
-				_ = sendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			_ = sendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
 				getPenalty(&client, &confJSON, update.Message.Text, webToBot)
@@ -210,25 +205,21 @@ func main() {
 				_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
 			}
 		case "restart":
-			if !isWork {
-				log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
-				// create cookie
-				cookieJar, _ = cookiejar.New(nil)
-				client = http.Client{
-					Jar: cookieJar,
-				}
-				// start go worker!
-				go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
-				defer close(botToWeb)
-				defer close(webToBot)
-				isWork = true
-				chatId = update.Message.Chat.ID
-			} else {
-				_ = sendMessageTelegram(chatId, "I work!", 0, bot)
+			log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
+			// create cookie
+			cookieJar, _ = cookiejar.New(nil)
+			client = http.Client{
+				Jar: cookieJar,
 			}
+			// start go worker!
+			go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
+			defer close(botToWeb)
+			defer close(webToBot)
+			isWork = true
+			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
-			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
+			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") {
 				_ = sendMessageTelegram(chatId, confJSON.init(update.Message.CommandArguments()), 0, bot)
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 
@@ -254,92 +245,60 @@ func main() {
 				log.Printf("%s try to change config!", update.Message.From.UserName)
 			}
 		case "hints":
-			if isWork {
-				go func() {
-					if len(bufModel.Level.Helps) > 0 {
-						_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.Helps, confJSON), 0, bot)
-					} else {
-						_ = sendMessageTelegram(chatId, "Подсказок нет&#128552;!\n", 0, bot)
-					}
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				if len(bufModel.Level.Helps) > 0 {
+					_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.Helps, confJSON), 0, bot)
+				} else {
+					_ = sendMessageTelegram(chatId, "Подсказок нет&#128552;!\n", 0, bot)
+				}
+			}()
 		case "penalty":
-			if isWork {
-				go func() {
-					if len(bufModel.Level.PenaltyHelps) > 0 {
-						_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.PenaltyHelps, confJSON), 0, bot)
-					} else {
-						_ = sendMessageTelegram(chatId, "Штрафных подсказок нет&#128532;!\n", 0, bot)
-					}
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				if len(bufModel.Level.PenaltyHelps) > 0 {
+					_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.PenaltyHelps, confJSON), 0, bot)
+				} else {
+					_ = sendMessageTelegram(chatId, "Штрафных подсказок нет&#128532;!\n", 0, bot)
+				}
+			}()
 		case "codesall":
 			//codesall - оставшиеся + снятые коды.
-			if isWork {
-				go func() {
-					_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, false), 0, bot)
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, false), 0, bot)
+			}()
 		case "codes":
 			///codes - оставшиеся коды.
-			if isWork {
-				go func() {
-					_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, true), 0, bot)
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, true), 0, bot)
+			}()
 		case "task":
-			if isWork {
-				go func() {
-					_ = sendMessageTelegram(chatId, getFirstTask(bufModel.Level.Tasks, confJSON), 0, bot)
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				_ = sendMessageTelegram(chatId, getFirstTask(bufModel.Level.Tasks, confJSON), 0, bot)
+			}()
 		case "msg":
-			if isWork {
-				go func() {
-					msgLevel := getFirstMessages(bufModel.Level.Messages, confJSON)
-					if len(msgLevel) == 0 {
-						_ = sendMessageTelegram(chatId, "&#128495;Сообщений на уровне нет.", 0, bot)
-					} else {
-						_ = sendMessageTelegram(chatId, msgLevel, 0, bot)
-					}
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				msgLevel := getFirstMessages(bufModel.Level.Messages, confJSON)
+				if len(msgLevel) == 0 {
+					_ = sendMessageTelegram(chatId, "&#128495;Сообщений на уровне нет.", 0, bot)
+				} else {
+					_ = sendMessageTelegram(chatId, msgLevel, 0, bot)
+				}
+			}()
 		case "timer":
-			if isWork {
-				go func() {
-					_ = sendMessageTelegram(chatId, getFirstTimer(bufModel.Level), 0, bot)
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				_ = sendMessageTelegram(chatId, getFirstTimer(bufModel.Level), 0, bot)
+			}()
 		case "add":
 			go func() {
 				_ = sendMessageTelegram(chatId, addUser(&client, &confJSON, update.Message.CommandArguments()), update.Message.MessageID, bot)
 			}()
 		case "bonuses":
-			if isWork {
-				go func() {
-					if len(bufModel.Level.Bonuses) > 0 {
-						_ = sendMessageTelegram(chatId, getFirstBonuses(bufModel.Level.Bonuses, confJSON), 0, bot)
-					} else {
-						_ = sendMessageTelegram(chatId, "Бонусов в игре нет!\n", 0, bot)
-					}
-				}()
-			} else {
-				_ = sendMessageTelegram(chatId, gameNotStart, 0, bot)
-			}
+			go func() {
+				if len(bufModel.Level.Bonuses) > 0 {
+					_ = sendMessageTelegram(chatId, getFirstBonuses(bufModel.Level.Bonuses, confJSON), 0, bot)
+				} else {
+					_ = sendMessageTelegram(chatId, "Бонусов в игре нет!\n", 0, bot)
+				}
+			}()
 		case "joke":
 			if len(configuration.Jokes) > 0 {
 				_ = sendMessageTelegram(chatId, configuration.Jokes[rand.Intn(len(configuration.Jokes))], 0, bot)

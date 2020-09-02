@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var strNotWords = "<b>Слов не обнаружено.</b>"
+
 func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
 	var answer struct {
 		URL             string `json:"url"`
@@ -46,7 +48,7 @@ func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
 	resp, err := client.Get(fmt.Sprintf("https://anagram.poncy.ru/anagram-decoding.cgi?name=anagram_index&inword=%s&answer_type=%s", text, str))
 	if err != nil {
 		log.Println(err)
-		return "<b>Слов не обнаружено.</b>"
+		return strNotWords
 	}
 	// read from body
 	body, err := ioutil.ReadAll(resp.Body)
@@ -71,7 +73,7 @@ func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
 			str += item + " "
 		}
 	} else {
-		str = "<b>Слов не обнаружено.</b>"
+		str = strNotWords
 	}
 	return str
 }
@@ -118,7 +120,7 @@ func associations(text string) string {
 			text += item.Name + " "
 		}
 	} else {
-		text = "<b>Слов не обнаружено.</b>"
+		text = strNotWords
 	}
 
 	return text

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -52,6 +53,103 @@ func enterGame(client *http.Client, game ConfigGameJSON) string {
 		return fmt.Sprintf("&#9940;Авторизация прошла НЕ успешно.\n%s\n%s", bodyJSON.Message, game.SubUrl)
 	}
 	return fmt.Sprintf("&#9940;Превышено число попыток авторизации на игру %s!", game.URLGame)
+}
+
+func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb chan MessengerStyle, webToBot chan MessengerStyle) error {
+	var str string
+	var bufStr string
+
+	isPromblemStart := false
+
+	msgBot := MessengerStyle{}
+	msgBot.Type = "text"
+
+	for {
+		// если игра уже идёт
+		select {
+		case msg := <-botToWeb:
+			if msg.ChannelMessage == "stop" {
+				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли &#128546; \nДля перезапуска используйте /restart"
+				webToBot <- msgBot
+				*isWork = false
+				log.Printf("Bot %s stop.\n", game.Gid)
+				return errors.New("Bot stop")
+			}
+		default:
+			modelGame := gameEngineModel(client, *game)
+			// что-то отсылаем если состояние игры изменилось лишь иначе идём на следующий круг
+			switch modelGame.Event {
+			case 0:
+				// если у нас не сбой и реально какое-то число уровней есть в игре
+				if modelGame.Level.LevelId != 0 {
+					str = "Игра уже идёт!"
+					msgBot.ChannelMessage = str
+					webToBot <- msgBot
+					return nil
+				} else {
+					if !isPromblemStart {
+						str = "Не смогу получить состояние игры..."
+						isPromblemStart = true
+					}
+					enterGame(client, *game)
+					break
+				}
+			case 1:
+				msgBot.ChannelMessage = "&#9940;Игра не существует!"
+				webToBot <- msgBot
+				*isWork = false
+				log.Printf("Bot %s stop  - case 0.\n", game.Gid)
+				return errors.New("ERROR")
+			case 5:
+				str = "Игра ещё не началась!"
+			case 6:
+				msgBot.ChannelMessage = "Игра закончилась."
+				webToBot <- msgBot
+				*isWork = false
+				log.Printf("Bot %s stop - case 6.\n", game.Gid)
+				return errors.New("FINISHED")
+			case 7:
+				str = "&#9940;Не подана заявка игроком, который запустил бота: " + game.NickName
+			case 8:
+				str = "&#9940;Не подана заявка командой!"
+			case 9:
+				str = "&#9940;Команда игрока <b>" + game.NickName + "</b> еще не принята в игру:" + game.URLGame
+			case 10:
+				str = "&#9940;У игрока нет команды, который запустил бота: " + game.NickName
+			case 11:
+				str = "&#9940;Игрок не активен в команд, который запустил бота: " + game.NickName
+			case 12:
+				str = "&#9940;В игре нет уровней!"
+			case 13:
+				str = "&#9940;Превышено количество участников в команде!"
+			case 16, 18, 21:
+				str = "&#9940;Уровень снят"
+			case 17:
+				msgBot.ChannelMessage = "&#9940;Игра закончена!"
+				webToBot <- msgBot
+				*isWork = false
+				log.Printf("Bot %s stop - case 17.\n", game.Gid)
+				return errors.New("FINISHED")
+			case 19:
+				str = "&#9940;Уровень пройден автопереходом!"
+			case 20:
+				str = "&#9940;Все сектора отгаданы!"
+			case 22:
+				str = "&#9940;Таймаут уровня!"
+			default:
+				str = "&#9940;Проблемы с игрой...."
+				enterGame(client, *game)
+			}
+
+			if str == bufStr {
+				continue
+			}
+
+			msgBot.ChannelMessage = str
+			webToBot <- msgBot
+			bufStr = str
+		}
+	}
 }
 func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 	msgBot := MessengerStyle{}
@@ -276,9 +374,6 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 func getFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str string) {
 	for _, bonus := range bonuses {
 		// Если ещё недоступен
-		if bonus.SecondsToStart > 0 {
-			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, convertTimeSec(bonus.SecondsToStart))
-		}
 		if bonus.SecondsToStart == 0 {
 			if bonus.IsAnswered {
 				// Если доступен и отгадан
@@ -287,6 +382,8 @@ func getFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str st
 				// Если доступен и не отгадан
 				str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s\n%s\n", bonus.Number, bonus.Name, replaceTag(bonus.Task, gameConfig.SubUrl))
 			}
+		} else {
+			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, convertTimeSec(bonus.SecondsToStart))
 		}
 		// Если есть подсказка/награда
 		if bonus.Help != "" {
@@ -415,13 +512,10 @@ func getFirstMessages(msg []MessagesStruct, gameConfig ConfigGameJSON) (str stri
 		for _, message := range msg {
 			str += fmt.Sprintf("&#128172;%s\n", replaceTag(message.MessageText, gameConfig.SubUrl))
 		}
-	} else {
-		str = ""
 	}
 	return str
 }
 func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
-
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(newHelps) == 0) && (len(oldHelps) == 0) {
 		return
@@ -494,7 +588,7 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
-				// ОПИСАНИЕ
+				// Описание
 				//if text have location
 				sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 				//if text have img
@@ -626,8 +720,7 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 					str += fmt.Sprintf("&#128495;<b>Сообщение изменено:</b>\n%s\n", model.MessageText)
 				}
 			} else {
-				str += "&#128495;<b>Появилось сообщение</b>:\n"
-				str += fmt.Sprintf("&#128172;%s\n", replaceTag(model.MessageText, gameConf.SubUrl))
+				str += fmt.Sprintf("&#128495;<b>Появилось сообщение</b>:\n&#128172;%s\n", replaceTag(model.MessageText, gameConf.SubUrl))
 			}
 		}
 	} else {
