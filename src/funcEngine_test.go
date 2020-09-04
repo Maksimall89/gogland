@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"fmt"
@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const pathTest = "config.json"
-
 func TestEngineEnterGame(t *testing.T) {
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{
@@ -19,10 +17,10 @@ func TestEngineEnterGame(t *testing.T) {
 	}
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest("")
+	confGameENJSON.InitTest("")
 	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 
-	result := enterGame(clientTEST, confGameENJSON)
+	result := EnterGame(clientTEST, confGameENJSON)
 	if result != fmt.Sprintf("&#10004;<b>Авторизация прошла успешно</b> на игру: %s", confGameENJSON.URLGame) {
 		t.Errorf("Unable to log in for %v", confGameENJSON)
 	}
@@ -34,11 +32,11 @@ func TestEngineGameEngineModel(t *testing.T) {
 	}
 
 	confGameENJSON := ConfigGameJSON{}
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 
 	exitGameTest(clientTEST, confGameENJSON.SubUrl)
-	enterGame(clientTEST, confGameENJSON)
-	result := gameEngineModel(clientTEST, confGameENJSON)
+	EnterGame(clientTEST, confGameENJSON)
+	result := GameEngineModel(clientTEST, confGameENJSON)
 	if result.Event != 0 {
 		t.Error("Impossible to get game state. Error code: ", result.Event)
 	}
@@ -55,17 +53,17 @@ func TestEngineSendCode(t *testing.T) {
 	}
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 
 	exitGameTest(clientTEST, confGameENJSON.SubUrl)
-	enterGame(clientTEST, confGameENJSON)
-	confGameENJSON.LevelNumber = gameEngineModel(clientTEST, confGameENJSON).Level.Number
+	EnterGame(clientTEST, confGameENJSON)
+	confGameENJSON.LevelNumber = GameEngineModel(clientTEST, confGameENJSON).Level.Number
 
 	code := fmt.Sprintf("НЕВЕРНЫЙ%d", rand.Int())
 	isBonus := new(bool)
 	*isBonus = false
 
-	sendCode(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
+	SendCode(clientTEST, &confGameENJSON, code, isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
@@ -80,7 +78,7 @@ func TestEngineSendCode(t *testing.T) {
 	}
 
 	*isBonus = true
-	sendCode(clientTEST, &confGameENJSON, code+"_bonus", isBonus, webToBotTEST, 0)
+	SendCode(clientTEST, &confGameENJSON, code+"_bonus", isBonus, webToBotTEST, 0)
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
 	case msgChanel = <-webToBotTEST:
@@ -110,10 +108,10 @@ func TestEngineGetPenalty(t *testing.T) {
 	}
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	exitGameTest(clientTEST, confGameENJSON.SubUrl)
-	enterGame(clientTEST, confGameENJSON)
-	getPenalty(clientTEST, &confGameENJSON, penaltyID, webToBotTEST)
+	EnterGame(clientTEST, confGameENJSON)
+	GetPenalty(clientTEST, &confGameENJSON, penaltyID, webToBotTEST)
 
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
@@ -132,7 +130,7 @@ func TestEngineGetFirstBonuses(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 
 	bonuses := []BonusesStruct{
 		{148016, "123e", 1, "sdfsdf", "werwerwersdfsdf", true, false, 0, 0, 0},
@@ -146,8 +144,8 @@ func TestEngineGetFirstBonuses(t *testing.T) {
 		"&#10004;<b>Бонус №3</b> newss1 (<b>выполнен</b>, награда: 0 секунд)\nwerwerdfg234wersdfsdf\n" +
 		"&#10004;<b>Бонус №4</b> neddd2 (<b>выполнен</b>, награда: 0 секунд)\nwersdf\n"
 
-	result := getFirstBonuses(bonuses, confGameENJSON)
-	if getFirstBonuses(bonuses, confGameENJSON) != checkBonuses {
+	result := GetFirstBonuses(bonuses, confGameENJSON)
+	if GetFirstBonuses(bonuses, confGameENJSON) != checkBonuses {
 		t.Errorf("For %v\nexpected %s\ngot %s", bonuses, checkBonuses, result)
 	}
 }
@@ -164,7 +162,7 @@ func TestEngineFirstSectors(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := getFirstSector(pair.input)
+		result := GetFirstSector(pair.input)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -184,7 +182,7 @@ func TestEngineFirstTimer(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := getFirstTimer(pair.input)
+		result := GetFirstTimer(pair.input)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -194,7 +192,7 @@ func TestEngineFirstTask(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	type testPair struct {
 		input  []TaskStruct
 		output string
@@ -208,7 +206,7 @@ func TestEngineFirstTask(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := getFirstTask(pair.input, confGameENJSON)
+		result := GetFirstTask(pair.input, confGameENJSON)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -228,7 +226,7 @@ func TestEngineGetLeftCodes(t *testing.T) {
 	sectors := []SectorsStruct{{1, 1, "bb", AnswerStruct{}, false}, {2, 2, "bbb", AnswerStruct{}, true}, {3, 3, "bbb", AnswerStruct{}, false}}
 
 	for _, pair := range tests {
-		result := getLeftCodes(sectors, pair.input)
+		result := GetLeftCodes(sectors, pair.input)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -238,7 +236,7 @@ func TestEngineFirstHelps(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 
 	type testPair struct {
 		input  []HelpsStruct
@@ -256,7 +254,7 @@ func TestEngineFirstHelps(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := getFirstHelps(pair.input, confGameENJSON)
+		result := GetFirstHelps(pair.input, confGameENJSON)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -266,7 +264,7 @@ func TestEngineFirstMessages(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 
 	type testPair struct {
 		input  []MessagesStruct
@@ -279,7 +277,7 @@ func TestEngineFirstMessages(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := getFirstMessages(pair.input, confGameENJSON)
+		result := GetFirstMessages(pair.input, confGameENJSON)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -289,7 +287,7 @@ func TestEngineCompareHelps(t *testing.T) {
 	t.Parallel()
 
 	confGameENJSON := ConfigGameJSON{}
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -312,7 +310,7 @@ func TestEngineCompareHelps(t *testing.T) {
 		"&#11088;<b>Новая подсказка</b> №3\nsdfs1111sfsdf\n",
 	}
 
-	compareHelps(newHelps, oldHelps, confGameENJSON, webToBotTEST)
+	CompareHelps(newHelps, oldHelps, confGameENJSON, webToBotTEST)
 	for _, helps := range arrHelps {
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
@@ -333,7 +331,7 @@ func TestEngineCompareHelpsPenalty(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -361,7 +359,7 @@ func TestEngineCompareHelpsPenalty(t *testing.T) {
 		"&#11088;<b>Новая штрафная подсказка</b> №4:\nк2\n<b>Штрафная подсказка:</b>\nsdfs1111sfsdf\n",
 	}
 
-	compareHelps(newHelps, oldHelps, confGameENJSON, webToBotTEST)
+	CompareHelps(newHelps, oldHelps, confGameENJSON, webToBotTEST)
 	for _, help := range arrHelps {
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
@@ -382,7 +380,7 @@ func TestEngineCompareBonuses(t *testing.T) {
 	t.Parallel()
 
 	confGameENJSON := ConfigGameJSON{}
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -407,7 +405,7 @@ func TestEngineCompareBonuses(t *testing.T) {
 		"&#11088;<b>Новый бонус</b> neddd2 №4\nsdf42f\nНаграда 0 секунд\n<b>Бонусная подсказка:</b>\nwersdf\n",
 	}
 
-	compareBonuses(newBonus, oldBonus, confGameENJSON, webToBotTEST)
+	CompareBonuses(newBonus, oldBonus, confGameENJSON, webToBotTEST)
 	for _, bonus := range arrBonuses {
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
@@ -428,7 +426,7 @@ func TestEngineCompareMessages(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -446,7 +444,7 @@ func TestEngineCompareMessages(t *testing.T) {
 	messages := "&#128495;<b>Сообщение изменено:</b>\nMagn  Телефонsdfsdfsdfы организаторов:895143Максим\r\n\n" +
 		"&#128495;<b>Появилось сообщение</b>:\n&#128172;new   Magn  Телефоны органыыыыыыыыыыыизаторов:895143Максим\r\n"
 
-	compareMessages(newMessages, oldMessages, confGameENJSON, webToBotTEST)
+	CompareMessages(newMessages, oldMessages, confGameENJSON, webToBotTEST)
 
 	select {
 	// В канал msgChanel будут приходить все новые сообщения from web
@@ -466,7 +464,7 @@ func TestEngineCompareTasks(t *testing.T) {
 	t.Parallel()
 
 	var confGameENJSON ConfigGameJSON
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -483,7 +481,7 @@ func TestEngineCompareTasks(t *testing.T) {
 
 	tasks := []string{"&#10004;<b>Появилось новое задание!</b>\n", "&#10060;<b>Задание изменено</b>:\nsdfsdf1231231231231sdfsdf"}
 
-	compareTasks(newTasks, oldTasks, confGameENJSON, webToBotTEST)
+	CompareTasks(newTasks, oldTasks, confGameENJSON, webToBotTEST)
 	for _, task := range tasks {
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
@@ -509,7 +507,7 @@ func TestEngineAddUser(t *testing.T) {
 		Jar: cookieJar,
 	}
 	confGameENJSON := ConfigGameJSON{}
-	confGameENJSON.initTest(pathTest)
+	confGameENJSON.InitTest(pathTestConf)
 	exitGameTest(clientTEST, confGameENJSON.SubUrl)
 
 	type testPair struct {
@@ -524,7 +522,7 @@ func TestEngineAddUser(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := addUser(clientTEST, &confGameENJSON, pair.input)
+		result := AddUser(clientTEST, &confGameENJSON, pair.input)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -548,7 +546,7 @@ func TestEngineTimeToBonuses(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := timeToBonuses(pair.input)
+		result := TimeToBonuses(pair.input)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}

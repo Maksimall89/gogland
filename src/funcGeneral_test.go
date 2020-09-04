@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"io/ioutil"
@@ -16,7 +16,7 @@ func TestGeneralLogInit(t *testing.T) {
 		t.Errorf("Dir %s did not delete", path)
 	}
 
-	logInit()
+	LogInit()
 	log.Println("TEST")
 
 	_, err = os.Stat(path)
@@ -46,7 +46,7 @@ func TestGeneralSearchLocation(t *testing.T) {
 			40,167845<br/>58,410765 //
 			fsdfsd 59°24'48.6756", 58°24'38.7396"
 			sdfsdgi :: 56°50.683, 53°11.776`
-	locationMap := searchLocation(text)
+	locationMap := SearchLocation(text)
 
 	for i := 0; i == len(locationMap)/2; i++ {
 		if (locationMap["Latitude"+strconv.FormatInt(int64(i), 10)] != locMapGood["Latitude"+strconv.FormatInt(int64(i), 10)]) && (locationMap["Longitude"+strconv.FormatInt(int64(i), 10)] != locMapGood["Longitude"+strconv.FormatInt(int64(i), 10)]) {
@@ -79,7 +79,7 @@ func TestGeneralSendLocation(t *testing.T) {
 		{0.0, 0.0},
 	}
 
-	sendLocation(locationMap, webToBotTEST)
+	SendLocation(locationMap, webToBotTEST)
 	for _, location := range tests {
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
@@ -103,7 +103,7 @@ func TestGeneralSearchPhoto(t *testing.T) {
 	PhotoMapGood[1] = `<img src="http://sdfsd.png" title="sdfsf">`
 
 	text := `<img src="http://ya.ru/iads.png">jdsfjklsjklds</b>fjklsdfjklsdfjklsd<img src="http://sdfsd.png" title="sdfsf">dfkjfjklsdfkjlsd`
-	photoMap := searchLocation(text)
+	photoMap := SearchLocation(text)
 
 	i := 0
 	for photo := range photoMap {
@@ -121,7 +121,7 @@ func TestGeneralSendPhoto(t *testing.T) {
 
 	for _, photo := range arrPhotos {
 		photoMap[0] = photo
-		sendPhoto(photoMap, webToBotTEST)
+		SendPhoto(photoMap, webToBotTEST)
 		select {
 		// В канал msgChanel будут приходить все новые сообщения from web
 		case msgChanel = <-webToBotTEST:
@@ -165,7 +165,7 @@ func TestGeneralReplaceTag(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := replaceTag(pair.input, "RxR")
+		result := ReplaceTag(pair.input, "RxR")
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -180,7 +180,7 @@ func TestGeneralDeleteMapFloat(t *testing.T) {
 	maps["asdas3"] = 415.42
 	maps["asdas4"] = 45.43
 
-	deleteMapFloat(maps)
+	DeleteMapFloat(maps)
 
 	NewLenMaps := len(maps)
 	if NewLenMaps != 0 {
@@ -196,7 +196,7 @@ func TestGeneralDeleteMap(t *testing.T) {
 	maps[3] = "asdas3"
 	maps[3] = "asdas4"
 
-	deleteMap(maps)
+	DeleteMap(maps)
 
 	NewLenMaps := len(maps)
 	if NewLenMaps != 0 {
@@ -224,7 +224,7 @@ func TestGeneralToFixed(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := toFixed(pair.input.num, pair.input.precision)
+		result := ToFixed(pair.input.num, pair.input.precision)
 		if result != pair.output {
 			t.Errorf("For %v\nexpected %f\ngot %v", pair.input, pair.output, result)
 		}
@@ -246,7 +246,7 @@ func TestGeneralConvertUTF(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result, _ := convertUTF(pair.input)
+		result, _ := ConvertUTF(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -270,7 +270,7 @@ func TestGeneralRound(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := round(pair.input)
+		result := Round(pair.input)
 		if result != pair.output {
 			t.Errorf("For %f\nexpected %d\ngot %d", pair.input, pair.output, result)
 		}
@@ -301,7 +301,7 @@ func TestGeneralConvertTimeSec(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := convertTimeSec(pair.input)
+		result := ConvertTimeSec(pair.input)
 		if result != pair.output {
 			t.Errorf("For %d\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}

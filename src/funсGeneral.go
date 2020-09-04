@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func logInit() {
+func LogInit() {
 	path := "log" // name folder for logs
 	// check what folder log is exist
 	_, err := os.Stat(path)
@@ -32,7 +32,7 @@ func logInit() {
 	log.SetOutput(fileLog)
 	log.SetPrefix("Gogland ")
 }
-func sendMessageTelegram(chatId int64, message string, replyToMessageID int, bot *tgbotapi.BotAPI) error {
+func SendMessageTelegram(chatId int64, message string, replyToMessageID int, bot *tgbotapi.BotAPI) error {
 	var pointerStr int
 	var msg tgbotapi.MessageConfig
 	var newMsg tgbotapi.Message
@@ -78,7 +78,7 @@ func sendMessageTelegram(chatId int64, message string, replyToMessageID int, bot
 	}
 	return nil
 }
-func searchLocation(text string) map[string]float64 {
+func SearchLocation(text string) map[string]float64 {
 	maps := make(map[string]float64)
 	re := regexp.MustCompile(`(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d{1,})*([.|″]\d)*["|″]*)`)
 
@@ -120,8 +120,8 @@ func searchLocation(text string) map[string]float64 {
 				min[0], _ = strconv.ParseFloat(buf1[1], 64)
 				min[1], _ = strconv.ParseFloat(buf2[1], 64)
 
-				maps["Latitude"+strconv.FormatInt(int64(counter), 10)] = degree[0] + toFixed(min[0]/60, 8)
-				maps["Longitude"+strconv.FormatInt(int64(counter), 10)] = degree[1] + toFixed(min[1]/60, 8)
+				maps["Latitude"+strconv.FormatInt(int64(counter), 10)] = degree[0] + ToFixed(min[0]/60, 8)
+				maps["Longitude"+strconv.FormatInt(int64(counter), 10)] = degree[1] + ToFixed(min[1]/60, 8)
 
 				counter++
 				continue
@@ -160,8 +160,8 @@ func searchLocation(text string) map[string]float64 {
 				sec[0], _ = strconv.ParseFloat(buf1[0], 64)
 				sec[1], _ = strconv.ParseFloat(buf2[0], 64)
 
-				maps["Latitude"+strconv.FormatInt(int64(counter), 10)] = degree[0] + toFixed(min[0]/60, 7) + toFixed(sec[0]/3600, 7)
-				maps["Longitude"+strconv.FormatInt(int64(counter), 10)] = degree[1] + toFixed(min[1]/60, 7) + toFixed(sec[1]/3600, 7)
+				maps["Latitude"+strconv.FormatInt(int64(counter), 10)] = degree[0] + ToFixed(min[0]/60, 7) + ToFixed(sec[0]/3600, 7)
+				maps["Longitude"+strconv.FormatInt(int64(counter), 10)] = degree[1] + ToFixed(min[1]/60, 7) + ToFixed(sec[1]/3600, 7)
 
 				counter++
 				continue
@@ -170,7 +170,7 @@ func searchLocation(text string) map[string]float64 {
 	}
 	return maps
 }
-func sendLocation(locationMap map[string]float64, webToBot chan MessengerStyle) {
+func SendLocation(locationMap map[string]float64, webToBot chan MessengerStyle) {
 	if len(locationMap) < 1 {
 		return
 	}
@@ -185,7 +185,7 @@ func sendLocation(locationMap map[string]float64, webToBot chan MessengerStyle) 
 		webToBot <- msgBot
 	}
 }
-func searchPhoto(text string) map[int]string {
+func SearchPhoto(text string) map[int]string {
 	maps := make(map[int]string)
 	regPattern, _ := regexp.Compile(`<img.+?src="(.+?)".*?>`)
 	if regPattern.MatchString(text) {
@@ -197,7 +197,7 @@ func searchPhoto(text string) map[int]string {
 	}
 	return maps
 }
-func sendPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
+func SendPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
 	if len(photoMap) < 1 {
 		return
 	}
@@ -210,7 +210,7 @@ func sendPhoto(photoMap map[int]string, webToBot chan MessengerStyle) {
 		webToBot <- msgBot
 	}
 }
-func replaceTag(str string, subUrl string) string {
+func ReplaceTag(str string, subUrl string) string {
 	/*
 		*полужирный*
 		_курсив_
@@ -303,7 +303,7 @@ func replaceTag(str string, subUrl string) string {
 	reg = regexp.MustCompile(`[:|\s](\d{2}[.|°,]+\d{1,8}(['|′.]\d)*([.|″]\d)*["|″]*)[,|\w\s\n<brBR/>]+(\d{2}[.|°,]+\d{1,8}(['|′.]\d)*([.|″]\d)*["|″]*)[\s|,.]`)
 	strArr = reg.FindAllString(str, -1)
 	for _, coordinate := range strArr {
-		finalCoordinates := searchLocation(coordinate)
+		finalCoordinates := SearchLocation(coordinate)
 		for i := 0; i < len(finalCoordinates)/2; i++ {
 			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(` <code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>, `, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
 		}
@@ -312,7 +312,7 @@ func replaceTag(str string, subUrl string) string {
 	reg = regexp.MustCompile(`<a href="(.+?)"*>(.+?)</a>`)
 	strArr = reg.FindAllString(str, -1)
 	for _, link := range strArr {
-		newLink, err := convertUTF(link)
+		newLink, err := ConvertUTF(link)
 		if err != nil {
 			log.Printf("Error URL conver =%s, Text=%s", err, str)
 			continue
@@ -321,21 +321,21 @@ func replaceTag(str string, subUrl string) string {
 	}
 	return str
 }
-func deleteMapFloat(maps map[string]float64) {
+func DeleteMapFloat(maps map[string]float64) {
 	for key := range maps {
 		delete(maps, key)
 	}
 }
-func deleteMap(maps map[int]string) {
+func DeleteMap(maps map[int]string) {
 	for key := range maps {
 		delete(maps, key)
 	}
 }
-func toFixed(num float64, precision int) float64 {
+func ToFixed(num float64, precision int) float64 {
 	output := math.Pow(10, float64(precision))
-	return float64(round(num*output)) / output
+	return float64(Round(num*output)) / output
 }
-func convertUTF(str string) (string, error) {
+func ConvertUTF(str string) (string, error) {
 	u, err := url.QueryUnescape(str)
 	if err != nil {
 		log.Printf("\nURL %s, bad request %s", str, err)
@@ -343,10 +343,10 @@ func convertUTF(str string) (string, error) {
 	}
 	return u, nil
 }
-func round(num float64) int {
+func Round(num float64) int {
 	return int(num + math.Copysign(0.5, num))
 }
-func convertTimeSec(times int) string {
+func ConvertTimeSec(times int) string {
 	if times == 0 {
 		return "0 секунд"
 	}
