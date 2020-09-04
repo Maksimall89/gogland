@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var pathTest = "config.json"
+const pathTest = "config.json"
 
 func TestEngineEnterGame(t *testing.T) {
 	cookieJar, _ := cookiejar.New(nil)

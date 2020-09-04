@@ -13,13 +13,15 @@ import (
 	"time"
 )
 
-var bufModel Model
-var photoMap map[int]string
-var locationMap map[string]float64
-var cookieJar *cookiejar.Jar
-var client http.Client
-var isAnswerBlock bool
-var isWork bool
+var (
+	bufModel      Model
+	photoMap      map[int]string
+	locationMap   map[string]float64
+	cookieJar     *cookiejar.Jar
+	client        http.Client
+	isAnswerBlock bool
+	isWork        bool
+)
 
 func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 	_, _ = resp.Write([]byte("Hi there! I'm telegram bot @gogland_bot. My owner @maksimall89"))
@@ -32,6 +34,7 @@ func main() {
 
 	if os.Getenv("Gogland_logs") == "1" {
 		logInit()
+		defer log.Println(recover())
 	}
 
 	// web server for heroku
@@ -143,29 +146,26 @@ func main() {
 		// В канал updates будут приходить все новые сообщения from telegram
 		select {
 		case update = <-updates:
-			if !isWork {
-				chatId = update.Message.Chat.ID
-			} else {
-				// Если пишут в другой чат ему, то игнор
-				if chatId != update.Message.Chat.ID {
-					continue
-				}
-			}
 			if update.Message == nil || update.Message.Text == "" || reflect.TypeOf(update.Message.Text).Kind() != reflect.String {
 				continue
 			}
-			break
 		default:
 			continue
 		}
 
 		if !isWork {
+			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
 			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
 				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
 				continue
 			default:
-
+				break
+			}
+		} else {
+			// Если пишут в другой чат ему, то игнор
+			if chatId != update.Message.Chat.ID {
+				continue
 			}
 		}
 
@@ -219,7 +219,7 @@ func main() {
 			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
-			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") && !isWork {
+			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") {
 				_ = sendMessageTelegram(chatId, confJSON.init(update.Message.CommandArguments()), 0, bot)
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 

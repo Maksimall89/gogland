@@ -374,9 +374,6 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 func getFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str string) {
 	for _, bonus := range bonuses {
 		// Если ещё недоступен
-		if bonus.SecondsToStart > 0 {
-			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, convertTimeSec(bonus.SecondsToStart))
-		}
 		if bonus.SecondsToStart == 0 {
 			if bonus.IsAnswered {
 				// Если доступен и отгадан
@@ -385,6 +382,8 @@ func getFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str st
 				// Если доступен и не отгадан
 				str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s\n%s\n", bonus.Number, bonus.Name, replaceTag(bonus.Task, gameConfig.SubUrl))
 			}
+		} else {
+			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, convertTimeSec(bonus.SecondsToStart))
 		}
 		// Если есть подсказка/награда
 		if bonus.Help != "" {
@@ -513,13 +512,10 @@ func getFirstMessages(msg []MessagesStruct, gameConfig ConfigGameJSON) (str stri
 		for _, message := range msg {
 			str += fmt.Sprintf("&#128172;%s\n", replaceTag(message.MessageText, gameConfig.SubUrl))
 		}
-	} else {
-		str = ""
 	}
 	return str
 }
 func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
-
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(newHelps) == 0) && (len(oldHelps) == 0) {
 		return
@@ -592,7 +588,7 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
-				// ОПИСАНИЕ
+				// Описание
 				//if text have location
 				sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
 				//if text have img
@@ -724,8 +720,7 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 					str += fmt.Sprintf("&#128495;<b>Сообщение изменено:</b>\n%s\n", model.MessageText)
 				}
 			} else {
-				str += "&#128495;<b>Появилось сообщение</b>:\n"
-				str += fmt.Sprintf("&#128172;%s\n", replaceTag(model.MessageText, gameConf.SubUrl))
+				str += fmt.Sprintf("&#128495;<b>Появилось сообщение</b>:\n&#128172;%s\n", replaceTag(model.MessageText, gameConf.SubUrl))
 			}
 		}
 	} else {
