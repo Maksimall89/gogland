@@ -266,22 +266,26 @@ func TableMendeleev(text string) string {
 
 	arrText := strings.Split(text, " ")
 	text = ""
-	for number, item := range arrText {
+	for _, item := range arrText {
 		attributeSearch = true
 		if item == "" {
 			continue
 		}
-		for _, element := range elements {
-			if strings.EqualFold(element.name, item) {
-				text += "Номер " + item + " = " + element.name + " - " + element.shortName + " - масса " + element.mass + ";\n"
-				attributeSearch = false
-				break
+		number, err := strconv.Atoi(item)
+		if err != nil {
+			for _, element := range elements {
+				if strings.EqualFold(element.name, item) {
+					text += "Номер " + item + " = " + element.name + " - " + element.shortName + " - масса " + element.mass + ";\n"
+					attributeSearch = false
+					break
+				}
 			}
+			if attributeSearch {
+				text += item + " = не допустимое число!\n"
+			}
+			continue
 		}
-		if attributeSearch {
-			text += item + " = не допустимое число!\n"
-		}
-		if number < 128 {
+		if (number > 0) && (number < 128) {
 			text += "Номер " + item + " = " + elements[number].name + " - " + elements[number].shortName + " - масса " + elements[number].mass + ";\n"
 		} else {
 			text += "Номера " + item + " не существует в таблице.\n"
