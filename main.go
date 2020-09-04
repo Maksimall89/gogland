@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"gogland/help"
+	"gogland/src"
 	"gopkg.in/telegram-bot-api.v4"
 	"log"
 	"math/rand"
@@ -11,31 +12,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
-	"sync"
 	"time"
-)
-
-// Client information
-var (
-	cookieJar *cookiejar.Jar
-	client    http.Client
-)
-
-// Buffer for information
-var (
-	bufModel Model
-)
-
-// State bot
-var (
-	isWork   bool
-	isWorkMu sync.Mutex
-)
-
-// State answer block
-var (
-	isAnswerBlock   bool
-	isAnswerBlockMu sync.Mutex
 )
 
 // Web-server status
@@ -46,10 +23,10 @@ func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
 	var err error
-	var confJSON ConfigGameJSON
+	var confJSON src.ConfigGameJSON
 
 	if os.Getenv("Gogland_logs") == "1" {
-		logInit()
+		src.LogInit()
 		defer log.Println(recover())
 	}
 
@@ -59,8 +36,8 @@ func main() {
 		err = http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	}()
 	// create chanel
-	webToBot := make(chan MessengerStyle, 100000) // chanel for send command in game and back information
-	botToWeb := make(chan MessengerStyle, 100)    // chanel for send command in game and back information
+	webToBot := make(chan src.MessengerStyle, 100000) // chanel for send command in game and back information
+	botToWeb := make(chan src.MessengerStyle, 100)    // chanel for send command in game and back information
 
 	commandArr := []string{
 		"/help - информация по всем доступным командам;",
@@ -98,8 +75,8 @@ func main() {
 	}
 
 	// read config file
-	var configuration ConfigBot
-	configuration.init("config.json")
+	var configuration src.ConfigBot
+	configuration.Init("config.json")
 
 	// configuration bot
 	bot, err := tgbotapi.NewBotAPI(configuration.TelegramBotToken)
@@ -120,17 +97,17 @@ func main() {
 	}
 
 	// set default config
-	var msgChannel MessengerStyle
+	var msgChannel src.MessengerStyle
 	var chatId int64
 	var buffer struct {
-		Coordinate Coordinate
+		Coordinate src.Coordinate
 		TextToChat string
 	}
 	var update tgbotapi.Update // chanel Update from telegram
 
-	isAnswerBlock = false // pass for enter code
-	isWork = false        // state work bot
-	isBonus := new(bool)  // code bonus
+	src.IsAnswerBlock = false // pass for enter code
+	src.IsWork = false        // state work bot
+	isBonus := new(bool)      // code bonus
 
 	// main cycle
 	for {
@@ -154,7 +131,7 @@ func main() {
 				} else {
 					buffer.TextToChat = msgChannel.ChannelMessage
 				}
-				_ = sendMessageTelegram(chatId, msgChannel.ChannelMessage, msgChannel.MsgId, bot)
+				_ = src.SendMessageTelegram(chatId, msgChannel.ChannelMessage, msgChannel.MsgId, bot)
 			}
 		default:
 			break
@@ -169,19 +146,19 @@ func main() {
 			continue
 		}
 
-		isWorkMu.Lock()
-		if !isWork {
-			isWorkMu.Unlock()
+		src.IsWorkMu.Lock()
+		if !src.IsWork {
+			src.IsWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
 			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
-				_ = sendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
+				_ = src.SendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
 				continue
 			default:
 				break
 			}
 		} else {
-			isWorkMu.Unlock()
+			src.IsWorkMu.Unlock()
 			// Если пишут в другой чат ему, то игнор
 			if chatId != update.Message.Chat.ID {
 				continue
@@ -195,251 +172,251 @@ func main() {
 				for _, item := range commandArr {
 					str += item + "\n"
 				}
-				_ = sendMessageTelegram(chatId, str, 0, bot)
+				_ = src.SendMessageTelegram(chatId, str, 0, bot)
 			}()
 		case "faq":
-			_ = sendMessageTelegram(chatId, `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`, 0, bot)
+			_ = src.SendMessageTelegram(chatId, `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`, 0, bot)
 		case "postfix":
 			confJSON.Postfix = update.Message.CommandArguments()
-			_ = sendMessageTelegram(chatId, "Постфикс принят", 0, bot)
+			_ = src.SendMessageTelegram(chatId, "Постфикс принят", 0, bot)
 		case "prefix":
 			confJSON.Prefix = update.Message.CommandArguments()
-			_ = sendMessageTelegram(chatId, "Префикс принят", 0, bot)
+			_ = src.SendMessageTelegram(chatId, "Префикс принят", 0, bot)
 		case "b":
 			*isBonus = true
-			go sendCode(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
+			go src.SendCode(&src.Client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 		case "pause":
-			isAnswerBlockMu.Lock()
-			isAnswerBlock = true
-			isAnswerBlockMu.Unlock()
-			_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
+			src.IsAnswerBlockMu.Lock()
+			src.IsAnswerBlock = true
+			src.IsAnswerBlockMu.Unlock()
+			_ = src.SendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
 		case "resume":
-			isAnswerBlockMu.Lock()
-			isAnswerBlock = false
-			isAnswerBlockMu.Unlock()
-			_ = sendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
+			src.IsAnswerBlockMu.Lock()
+			src.IsAnswerBlock = false
+			src.IsAnswerBlockMu.Unlock()
+			_ = src.SendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
-				getPenalty(&client, &confJSON, update.Message.Text, webToBot)
+				src.GetPenalty(&src.Client, &confJSON, update.Message.Text, webToBot)
 			} else {
-				_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
+				_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
 			}
 		case "stop":
-			isWorkMu.Lock()
-			isWork = false
-			isWorkMu.Unlock()
+			src.IsWorkMu.Lock()
+			src.IsWork = false
+			src.IsWorkMu.Unlock()
 			msgChannel.ChannelMessage = "stop"
 			botToWeb <- msgChannel
 		case "restart":
 			log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
 			// create cookie
-			cookieJar, _ = cookiejar.New(nil)
-			client = http.Client{
-				Jar: cookieJar,
+			src.CookieJar, _ = cookiejar.New(nil)
+			src.Client = http.Client{
+				Jar: src.CookieJar,
 			}
 			// start go worker!
-			go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
+			go src.WorkerJSON(&src.Client, &confJSON, botToWeb, webToBot, &src.IsWork, &src.IsAnswerBlock)
 			defer close(botToWeb)
 			defer close(webToBot)
-			isWorkMu.Lock()
-			isWork = true
-			isWorkMu.Unlock()
+			src.IsWorkMu.Lock()
+			src.IsWork = true
+			src.IsWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
 			if (update.Message.From.UserName == configuration.OwnName) && (update.Message.CommandArguments() != "") {
-				_ = sendMessageTelegram(chatId, confJSON.init(update.Message.CommandArguments()), 0, bot)
+				_ = src.SendMessageTelegram(chatId, confJSON.Init(update.Message.CommandArguments()), 0, bot)
 				log.Printf("%s change config JSON.", update.Message.From.UserName)
 
 				// create cookie
-				cookieJar, _ = cookiejar.New(nil)
-				client = http.Client{
-					Jar: cookieJar,
+				src.CookieJar, _ = cookiejar.New(nil)
+				src.Client = http.Client{
+					Jar: src.CookieJar,
 				}
 				// start go worker!
-				go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
+				go src.WorkerJSON(&src.Client, &confJSON, botToWeb, webToBot, &src.IsWork, &src.IsAnswerBlock)
 				defer close(botToWeb)
 				defer close(webToBot)
 
-				_ = sendMessageTelegram(chatId, "All change is apply JSON", 0, bot)
-				isWorkMu.Lock()
-				isWork = true
-				isWorkMu.Unlock()
+				_ = src.SendMessageTelegram(chatId, "All change is apply JSON", 0, bot)
+				src.IsWorkMu.Lock()
+				src.IsWork = true
+				src.IsWorkMu.Unlock()
 				chatId = update.Message.Chat.ID
 			} else {
-				isWorkMu.Lock()
-				if isWork {
-					_ = sendMessageTelegram(chatId, "I work!", 0, bot)
+				src.IsWorkMu.Lock()
+				if src.IsWork {
+					_ = src.SendMessageTelegram(chatId, "I work!", 0, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "You is't my own!", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "You is't my own!", 0, bot)
 				}
-				isWorkMu.Unlock()
+				src.IsWorkMu.Unlock()
 				log.Printf("%s try to change config!", update.Message.From.UserName)
 			}
 		case "hints":
 			go func() {
-				if len(bufModel.Level.Helps) > 0 {
-					_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.Helps, confJSON), 0, bot)
+				if len(src.BufModel.Level.Helps) > 0 {
+					_ = src.SendMessageTelegram(chatId, src.GetFirstHelps(src.BufModel.Level.Helps, confJSON), 0, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Подсказок нет&#128552;!\n", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "Подсказок нет&#128552;!\n", 0, bot)
 				}
 			}()
 		case "penalty":
 			go func() {
-				if len(bufModel.Level.PenaltyHelps) > 0 {
-					_ = sendMessageTelegram(chatId, getFirstHelps(bufModel.Level.PenaltyHelps, confJSON), 0, bot)
+				if len(src.BufModel.Level.PenaltyHelps) > 0 {
+					_ = src.SendMessageTelegram(chatId, src.GetFirstHelps(src.BufModel.Level.PenaltyHelps, confJSON), 0, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Штрафных подсказок нет&#128532;!\n", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "Штрафных подсказок нет&#128532;!\n", 0, bot)
 				}
 			}()
 		case "codesall":
 			//codesall - оставшиеся + снятые коды.
 			go func() {
-				_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, false), 0, bot)
+				_ = src.SendMessageTelegram(chatId, src.GetLeftCodes(src.BufModel.Level.Sectors, false), 0, bot)
 			}()
 		case "codes":
 			///codes - оставшиеся коды.
 			go func() {
-				_ = sendMessageTelegram(chatId, getLeftCodes(bufModel.Level.Sectors, true), 0, bot)
+				_ = src.SendMessageTelegram(chatId, src.GetLeftCodes(src.BufModel.Level.Sectors, true), 0, bot)
 			}()
 		case "task":
 			go func() {
-				_ = sendMessageTelegram(chatId, getFirstTask(bufModel.Level.Tasks, confJSON), 0, bot)
+				_ = src.SendMessageTelegram(chatId, src.GetFirstTask(src.BufModel.Level.Tasks, confJSON), 0, bot)
 			}()
 		case "msg":
 			go func() {
-				msgLevel := getFirstMessages(bufModel.Level.Messages, confJSON)
+				msgLevel := src.GetFirstMessages(src.BufModel.Level.Messages, confJSON)
 				if len(msgLevel) == 0 {
-					_ = sendMessageTelegram(chatId, "&#128495;Сообщений на уровне нет.", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "&#128495;Сообщений на уровне нет.", 0, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, msgLevel, 0, bot)
+					_ = src.SendMessageTelegram(chatId, msgLevel, 0, bot)
 				}
 			}()
 		case "timer":
 			go func() {
-				_ = sendMessageTelegram(chatId, getFirstTimer(bufModel.Level), 0, bot)
+				_ = src.SendMessageTelegram(chatId, src.GetFirstTimer(src.BufModel.Level), 0, bot)
 			}()
 		case "add":
 			go func() {
-				_ = sendMessageTelegram(chatId, addUser(&client, &confJSON, update.Message.CommandArguments()), update.Message.MessageID, bot)
+				_ = src.SendMessageTelegram(chatId, src.AddUser(&src.Client, &confJSON, update.Message.CommandArguments()), update.Message.MessageID, bot)
 			}()
 		case "bonuses":
 			go func() {
-				if len(bufModel.Level.Bonuses) > 0 {
-					_ = sendMessageTelegram(chatId, getFirstBonuses(bufModel.Level.Bonuses, confJSON), 0, bot)
+				if len(src.BufModel.Level.Bonuses) > 0 {
+					_ = src.SendMessageTelegram(chatId, src.GetFirstBonuses(src.BufModel.Level.Bonuses, confJSON), 0, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Бонусов в игре нет!\n", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "Бонусов в игре нет!\n", 0, bot)
 				}
 			}()
 		case "joke":
 			if len(configuration.Jokes) > 0 {
-				_ = sendMessageTelegram(chatId, configuration.Jokes[rand.Intn(len(configuration.Jokes))], 0, bot)
+				_ = src.SendMessageTelegram(chatId, configuration.Jokes[rand.Intn(len(configuration.Jokes))], 0, bot)
 			} else {
-				_ = sendMessageTelegram(chatId, "Шуток нет.", 0, bot)
+				_ = src.SendMessageTelegram(chatId, "Шуток нет.", 0, bot)
 			}
 		case "n2w":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "w2n":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "ac":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.AutoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.AutoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "ana":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "bra":
 			go func() {
 				if len(update.Message.CommandArguments()) > 5 {
-					_ = sendMessageTelegram(chatId, help.Braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.Braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "smask":
 			go func() {
 				if len(update.Message.CommandArguments()) > 1 {
-					_ = sendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "mt":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.TableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.TableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "mz":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.Morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.Morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "ass":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.Associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.Associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "b2d":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "d2b":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>", update.Message.MessageID, bot)
 				}
 			}()
 		case "qw":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, help.TranslateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, help.TranslateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
-					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>", update.Message.MessageID, bot)
+					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>", update.Message.MessageID, bot)
 				}
 			}()
 		default:
 			go func() {
-				sendLocation(searchLocation(update.Message.Text), webToBot)
+				src.SendLocation(src.SearchLocation(update.Message.Text), webToBot)
 			}()
-			isWorkMu.Lock()
-			if isWork {
-				isWorkMu.Unlock()
+			src.IsWorkMu.Lock()
+			if src.IsWork {
+				src.IsWorkMu.Unlock()
 				// WTF symbol what I need ignore
 				if strings.ContainsAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") {
 					break
@@ -447,19 +424,19 @@ func main() {
 				// check  codes
 				if strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789!?") {
 					*isBonus = false
-					isAnswerBlockMu.Lock()
-					if !isAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
+					src.IsAnswerBlockMu.Lock()
+					if !src.IsAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
 						arrCodes := strings.Split(update.Message.Text, "\n")
 						for _, code := range arrCodes {
-							go sendCode(&client, &confJSON, code, isBonus, webToBot, update.Message.MessageID)
+							go src.SendCode(&src.Client, &confJSON, code, isBonus, webToBot, update.Message.MessageID)
 						}
 					} else {
-						_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
+						_ = src.SendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
 					}
-					isAnswerBlockMu.Unlock()
+					src.IsAnswerBlockMu.Unlock()
 				}
 			}
-			isWorkMu.Unlock()
+			src.IsWorkMu.Unlock()
 		}
 	}
 }

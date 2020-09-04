@@ -1,4 +1,4 @@
-package main
+package src
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-func enterGame(client *http.Client, game ConfigGameJSON) string {
+func EnterGame(client *http.Client, game ConfigGameJSON) string {
 	type JSONEnter struct {
 		Error                int         `json:"Error"`
 		Message              string      `json:"Message"`
@@ -55,7 +55,7 @@ func enterGame(client *http.Client, game ConfigGameJSON) string {
 	return fmt.Sprintf("&#9940;Превышено число попыток авторизации на игру %s!", game.URLGame)
 }
 
-func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb chan MessengerStyle, webToBot chan MessengerStyle) error {
+func StartGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb chan MessengerStyle, webToBot chan MessengerStyle) error {
 	var str string
 	var bufStr string
 
@@ -71,14 +71,14 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			if msg.ChannelMessage == "stop" {
 				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли &#128546; \nДля перезапуска используйте /restart"
 				webToBot <- msgBot
-				isWorkMu.Lock()
+				IsWorkMu.Lock()
 				*isWork = false
-				isWorkMu.Unlock()
+				IsWorkMu.Unlock()
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return errors.New("Bot stop")
 			}
 		default:
-			modelGame := gameEngineModel(client, *game)
+			modelGame := GameEngineModel(client, *game)
 			// что-то отсылаем если состояние игры изменилось лишь иначе идём на следующий круг
 			switch modelGame.Event {
 			case 0:
@@ -93,15 +93,15 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 						str = "Не смогу получить состояние игры..."
 						isPromblemStart = true
 					}
-					enterGame(client, *game)
+					EnterGame(client, *game)
 					break
 				}
 			case 1:
 				msgBot.ChannelMessage = "&#9940;Игра не существует!"
 				webToBot <- msgBot
-				isWorkMu.Lock()
+				IsWorkMu.Lock()
 				*isWork = false
-				isWorkMu.Unlock()
+				IsWorkMu.Unlock()
 				log.Printf("Bot %s stop  - case 0.\n", game.Gid)
 				return errors.New("ERROR")
 			case 5:
@@ -109,9 +109,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 6:
 				msgBot.ChannelMessage = "Игра закончилась."
 				webToBot <- msgBot
-				isWorkMu.Lock()
+				IsWorkMu.Lock()
 				*isWork = false
-				isWorkMu.Unlock()
+				IsWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 6.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 7:
@@ -133,9 +133,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 17:
 				msgBot.ChannelMessage = "&#9940;Игра закончена!"
 				webToBot <- msgBot
-				isWorkMu.Lock()
+				IsWorkMu.Lock()
 				*isWork = false
-				isWorkMu.Unlock()
+				IsWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 17.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 19:
@@ -146,7 +146,7 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 				str = "&#9940;Таймаут уровня!"
 			default:
 				str = "&#9940;Проблемы с игрой...."
-				enterGame(client, *game)
+				EnterGame(client, *game)
 			}
 
 			if str == bufStr {
@@ -159,7 +159,7 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 		}
 	}
 }
-func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
+func GameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 	msgBot := MessengerStyle{}
 	msgBot.Type = "text"
 	var counter int8
@@ -168,7 +168,7 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 
 	// 3 Попытки
 	for counter = 0; counter < 3; counter++ {
-		enterGame(client, game)
+		EnterGame(client, game)
 		resp, err := client.Get(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1", game.SubUrl, game.Gid))
 		if err != nil || resp == nil {
 			continue
@@ -194,7 +194,7 @@ func gameEngineModel(client *http.Client, game ConfigGameJSON) Model {
 	}
 	return Model{}
 }
-func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *bool, webToBot chan MessengerStyle, MsgId int) {
+func SendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *bool, webToBot chan MessengerStyle, MsgId int) {
 	var msgBot MessengerStyle
 	msgBot.MsgId = MsgId
 	msgBot.Type = "text"
@@ -225,7 +225,7 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 		}
 	}
 	// Получаем текущие состояние игры
-	ModelState := gameEngineModel(client, *game)
+	ModelState := GameEngineModel(client, *game)
 
 	// Проверяем на дубль
 	for _, LevelInfo := range ModelState.Level.MixedActions {
@@ -238,7 +238,7 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 	// если получили ошибку... то снова пытаемся получить статус игры
 	if ModelState.Level.Number == 0 {
 		for {
-			ModelState = gameEngineModel(client, *game)
+			ModelState = GameEngineModel(client, *game)
 			if ModelState.Level.Number != 0 {
 				break
 			}
@@ -259,7 +259,7 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 				if !ModelState.Level.HasAnswerBlockRule || ModelState.Level.BlockDuration <= 0 {
 					formData.Add("LevelAction.Answer", code)
 				} else {
-					msgBot.ChannelMessage = fmt.Sprintf("&#128219;<b>Ограничение на ввод.</b>\nЯ не смог отправить код&#128546;\nВы сможете ввести код через %s", convertTimeSec(ModelState.Level.BlockDuration))
+					msgBot.ChannelMessage = fmt.Sprintf("&#128219;<b>Ограничение на ввод.</b>\nЯ не смог отправить код&#128546;\nВы сможете ввести код через %s", ConvertTimeSec(ModelState.Level.BlockDuration))
 					webToBot <- msgBot
 					return
 				}
@@ -268,7 +268,7 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 			if err != nil || resp == nil {
 				log.Println("Ошибка при отправке кода 1.")
 				log.Println(err)
-				enterGame(client, *game)
+				EnterGame(client, *game)
 				continue
 			}
 			defer resp.Body.Close()
@@ -279,12 +279,12 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 				log.Println("Ошибка при отправке кода 2.")
 				log.Println(string(body))
 				log.Println(err)
-				enterGame(client, *game)
+				EnterGame(client, *game)
 				continue
 			}
 
 			if strings.Contains(string(body), `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">`) {
-				enterGame(client, *game)
+				EnterGame(client, *game)
 				continue
 			}
 
@@ -293,14 +293,14 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 			if err != nil {
 				log.Println("Ошибка генерации JSON.")
 				log.Println(err)
-				enterGame(client, *game)
+				EnterGame(client, *game)
 				continue
 			}
 
 			// Если получили ошибку
 			if ModelState.Event != 0 {
 				log.Println("Слетела авторизация...")
-				enterGame(client, *game)
+				EnterGame(client, *game)
 				continue
 			}
 
@@ -331,14 +331,14 @@ func sendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 	msgBot.ChannelMessage = "&#9940;Превышено число попыток отправить код!\nПовторите ещё раз."
 	webToBot <- msgBot
 }
-func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, webToBot chan MessengerStyle) {
+func GetPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, webToBot chan MessengerStyle) {
 	var msgBot MessengerStyle
 	msgBot.Type = "text"
 	var errCounter int8
 	var str string
 
 	for errCounter = 0; errCounter < 5; errCounter++ {
-		enterGame(client, *game)
+		EnterGame(client, *game)
 		resp, err := client.Get(fmt.Sprintf("http://%s/GameEngines/Encounter/Play/%s?json=1&pid=%s&pact=1", game.SubUrl, game.Gid, penaltyID))
 		if err != nil || resp == nil {
 			log.Println("Ошибка при взятии штрафной подсказки 1.")
@@ -379,28 +379,28 @@ func getPenalty(client *http.Client, game *ConfigGameJSON, penaltyID string, web
 	msgBot.ChannelMessage = "&#9940;Превышено число попыток взять штрафную подсказку!\nПовторите ещё раз."
 	webToBot <- msgBot
 }
-func getFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str string) {
+func GetFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str string) {
 	for _, bonus := range bonuses {
 		// Если ещё недоступен
 		if bonus.SecondsToStart == 0 {
 			if bonus.IsAnswered {
 				// Если доступен и отгадан
-				str += fmt.Sprintf("&#10004;<b>Бонус №%d</b> %s (<b>выполнен</b>, награда: %s)\n", bonus.Number, bonus.Name, convertTimeSec(bonus.AwardTime))
+				str += fmt.Sprintf("&#10004;<b>Бонус №%d</b> %s (<b>выполнен</b>, награда: %s)\n", bonus.Number, bonus.Name, ConvertTimeSec(bonus.AwardTime))
 			} else {
 				// Если доступен и не отгадан
-				str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s\n%s\n", bonus.Number, bonus.Name, replaceTag(bonus.Task, gameConfig.SubUrl))
+				str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s\n%s\n", bonus.Number, bonus.Name, ReplaceTag(bonus.Task, gameConfig.SubUrl))
 			}
 		} else {
-			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, convertTimeSec(bonus.SecondsToStart))
+			str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s будет доступен через %s.\n", bonus.Number, bonus.Name, ConvertTimeSec(bonus.SecondsToStart))
 		}
 		// Если есть подсказка/награда
 		if bonus.Help != "" {
-			str += fmt.Sprintf("%s\n", replaceTag(bonus.Help, gameConfig.SubUrl))
+			str += fmt.Sprintf("%s\n", ReplaceTag(bonus.Help, gameConfig.SubUrl))
 		}
 	}
 	return str
 }
-func getFirstSector(level LevelStruct) (str string) {
+func GetFirstSector(level LevelStruct) (str string) {
 	if level.SectorsLeftToClose > 0 {
 		str = fmt.Sprintf("&#128269;Вам нужно найти <b>%d из %d</b> секторов.\n", level.SectorsLeftToClose, len(level.Sectors))
 	} else {
@@ -408,25 +408,25 @@ func getFirstSector(level LevelStruct) (str string) {
 	}
 	return str
 }
-func getFirstTimer(level LevelStruct) (str string) {
+func GetFirstTimer(level LevelStruct) (str string) {
 	if level.Timeout == 0 {
 		str = "&#9203;<b>Автоперехода нет</b>\n"
 	} else {
-		str = fmt.Sprintf("&#9200;До автоперехода %s\n", convertTimeSec(level.TimeoutSecondsRemain))
+		str = fmt.Sprintf("&#9200;До автоперехода %s\n", ConvertTimeSec(level.TimeoutSecondsRemain))
 		if level.TimeoutAward != 0 {
-			str += fmt.Sprintf("&#128276;Штраф за автопереход %s\n", convertTimeSec(level.TimeoutAward*(-1)))
+			str += fmt.Sprintf("&#128276;Штраф за автопереход %s\n", ConvertTimeSec(level.TimeoutAward*(-1)))
 		}
 	}
 	return str
 }
-func getFirstTask(tasks []TaskStruct, gameConfig ConfigGameJSON) (str string) {
+func GetFirstTask(tasks []TaskStruct, gameConfig ConfigGameJSON) (str string) {
 	if len(tasks) > 0 {
 		str = "\n&#9889;<b>Задание</b>:\n"
 		for _, text := range tasks {
 			if text.TaskText == "" {
 				str += "\n&#10060;Текст задания <b>отсуствует</b>!\n"
 			} else {
-				str += fmt.Sprintf("%s\n", replaceTag(text.TaskTextFormatted, gameConfig.SubUrl))
+				str += fmt.Sprintf("%s\n", ReplaceTag(text.TaskTextFormatted, gameConfig.SubUrl))
 			}
 		}
 	} else {
@@ -434,7 +434,7 @@ func getFirstTask(tasks []TaskStruct, gameConfig ConfigGameJSON) (str string) {
 	}
 	return str
 }
-func getLeftCodes(sectors []SectorsStruct, isNeed bool) (str string) {
+func GetLeftCodes(sectors []SectorsStruct, isNeed bool) (str string) {
 	if isNeed {
 		str = "Вам осталось снять сектора:\n\n"
 	}
@@ -458,7 +458,7 @@ func getLeftCodes(sectors []SectorsStruct, isNeed bool) (str string) {
 	}
 	return str
 }
-func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) {
+func GetFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) {
 	if len(helps) <= 0 {
 		return ""
 	}
@@ -467,11 +467,11 @@ func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 			for _, penaltyHelp := range helps {
 				// проверяем через сколько будет доступна подсказка
 				if penaltyHelp.RemainSeconds > 0 {
-					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d будет через %s.\n", penaltyHelp.Number, convertTimeSec(penaltyHelp.RemainSeconds))
+					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d будет через %s.\n", penaltyHelp.Number, ConvertTimeSec(penaltyHelp.RemainSeconds))
 				}
 				// Если подсказка уже доступна и взята
 				if penaltyHelp.HelpText != "" {
-					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d:\n%s\n\n", penaltyHelp.Number, replaceTag(penaltyHelp.HelpText, gameConfig.SubUrl))
+					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d:\n%s\n\n", penaltyHelp.Number, ReplaceTag(penaltyHelp.HelpText, gameConfig.SubUrl))
 					continue
 				}
 				if penaltyHelp.HelpText == "" {
@@ -485,11 +485,11 @@ func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 					}
 					// Штраф за взятие если ещё ёё не взяли
 					if penaltyHelp.Penalty != 0 {
-						str += fmt.Sprintf("&#9888;Штраф за взятие: %s\n", convertTimeSec(penaltyHelp.Penalty))
+						str += fmt.Sprintf("&#9888;Штраф за взятие: %s\n", ConvertTimeSec(penaltyHelp.Penalty))
 					}
 					// Описание подсказки если ещё её не взяли
 					if penaltyHelp.PenaltyComment != "" {
-						str += fmt.Sprintf("<b>Описание:</b> %s\n", replaceTag(penaltyHelp.PenaltyComment, gameConfig.SubUrl))
+						str += fmt.Sprintf("<b>Описание:</b> %s\n", ReplaceTag(penaltyHelp.PenaltyComment, gameConfig.SubUrl))
 					}
 				}
 				str += "\n"
@@ -502,9 +502,9 @@ func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 			for _, help := range helps {
 				str += fmt.Sprintf("&#10004;<b>Подсказка</b> №%d ", help.Number)
 				if help.RemainSeconds > 0 {
-					str += fmt.Sprintf("будет через %s.\n", convertTimeSec(help.RemainSeconds))
+					str += fmt.Sprintf("будет через %s.\n", ConvertTimeSec(help.RemainSeconds))
 				} else {
-					str += fmt.Sprintf("\n%s\n", replaceTag(help.HelpText, gameConfig.SubUrl))
+					str += fmt.Sprintf("\n%s\n", ReplaceTag(help.HelpText, gameConfig.SubUrl))
 				}
 				str += "\n"
 			}
@@ -514,16 +514,16 @@ func getFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 	}
 	return str
 }
-func getFirstMessages(msg []MessagesStruct, gameConfig ConfigGameJSON) (str string) {
+func GetFirstMessages(msg []MessagesStruct, gameConfig ConfigGameJSON) (str string) {
 	if len(msg) > 0 {
 		str += "&#128495;<b>Сообщения на уровне:</b>\n"
 		for _, message := range msg {
-			str += fmt.Sprintf("&#128172;%s\n", replaceTag(message.MessageText, gameConfig.SubUrl))
+			str += fmt.Sprintf("&#128172;%s\n", ReplaceTag(message.MessageText, gameConfig.SubUrl))
 		}
 	}
 	return str
 }
-func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
+func CompareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(newHelps) == 0) && (len(oldHelps) == 0) {
 		return
@@ -556,22 +556,22 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 			// старая подсказка
 			if newHelps[0].IsPenalty {
 				if oldHelps[numberNew].PenaltyComment != helpNew.PenaltyComment {
-					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение в описании</b> штрафной подсказки №%d:\n%s\n", helpNew.Number, replaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
+					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение в описании</b> штрафной подсказки №%d:\n%s\n", helpNew.Number, ReplaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
 					webToBot <- msgBot
 					//if text have location
-					sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
+					SendLocation(SearchLocation(helpNew.PenaltyComment), webToBot)
 					//if text have img
-					sendPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
+					SendPhoto(SearchPhoto(helpNew.PenaltyComment), webToBot)
 				}
 			}
 			// проверка на изменение текста
 			if oldHelps[numberNew].HelpText != helpNew.HelpText {
-				msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в %s №%d:\n%s\n", StartString, helpNew.Number, replaceTag(helpNew.HelpText, gameConf.SubUrl))
+				msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в %s №%d:\n%s\n", StartString, helpNew.Number, ReplaceTag(helpNew.HelpText, gameConf.SubUrl))
 				webToBot <- msgBot
 				//if text have location
-				sendLocation(searchLocation(helpNew.HelpText), webToBot)
+				SendLocation(SearchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				SendPhoto(SearchPhoto(helpNew.HelpText), webToBot)
 			}
 			// проверка, что уже отправляли
 			if helpNew.RemainSeconds != oldHelps[numberNew].RemainSeconds {
@@ -587,37 +587,37 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 		} else {
 			// новая подсказка!
 			if newHelps[0].IsPenalty {
-				str = fmt.Sprintf("&#11088;<b>Новая штрафная подсказка</b> №%d:\n%s\n", helpNew.Number, replaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
+				str = fmt.Sprintf("&#11088;<b>Новая штрафная подсказка</b> №%d:\n%s\n", helpNew.Number, ReplaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
 				if helpNew.RemainSeconds > 0 {
-					str += fmt.Sprintf("<b>Будет открыта через</b> %s.\n", convertTimeSec(helpNew.RemainSeconds))
+					str += fmt.Sprintf("<b>Будет открыта через</b> %s.\n", ConvertTimeSec(helpNew.RemainSeconds))
 				}
 				if helpNew.HelpText != "" {
-					str += fmt.Sprintf("<b>Штрафная подсказка:</b>\n%s\n", replaceTag(helpNew.HelpText, gameConf.SubUrl))
+					str += fmt.Sprintf("<b>Штрафная подсказка:</b>\n%s\n", ReplaceTag(helpNew.HelpText, gameConf.SubUrl))
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
 				// Описание
 				//if text have location
-				sendLocation(searchLocation(helpNew.PenaltyComment), webToBot)
+				SendLocation(SearchLocation(helpNew.PenaltyComment), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(helpNew.PenaltyComment), webToBot)
+				SendPhoto(SearchPhoto(helpNew.PenaltyComment), webToBot)
 				//if text have location
-				sendLocation(searchLocation(helpNew.HelpText), webToBot)
+				SendLocation(SearchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				SendPhoto(SearchPhoto(helpNew.HelpText), webToBot)
 			} else {
 				str = fmt.Sprintf("&#11088;<b>Новая подсказка</b> №%d", helpNew.Number)
 				if helpNew.RemainSeconds > 0 {
-					str += fmt.Sprintf("будет открыта через %s.\n", convertTimeSec(helpNew.RemainSeconds))
+					str += fmt.Sprintf("будет открыта через %s.\n", ConvertTimeSec(helpNew.RemainSeconds))
 				} else {
-					str += fmt.Sprintf("\n%s\n", replaceTag(helpNew.HelpText, gameConf.SubUrl))
+					str += fmt.Sprintf("\n%s\n", ReplaceTag(helpNew.HelpText, gameConf.SubUrl))
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
 				//if text have location
-				sendLocation(searchLocation(helpNew.HelpText), webToBot)
+				SendLocation(SearchLocation(helpNew.HelpText), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(helpNew.HelpText), webToBot)
+				SendPhoto(SearchPhoto(helpNew.HelpText), webToBot)
 			}
 			switch helpNew.RemainSeconds {
 			case 60:
@@ -629,7 +629,7 @@ func compareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 		}
 	}
 }
-func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
+func CompareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(new) == 0) && (len(old) == 0) {
 		return
@@ -655,65 +655,65 @@ func compareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 		if numberNew < len(old) {
 			// проверка на описание
 			if old[numberNew].Task != bonusNew.Task {
-				str = fmt.Sprintf("&#11088;<b>Изменение в описании</b> бонуса %s №%d:\n%s\n", bonusNew.Name, bonusNew.Number, replaceTag(bonusNew.Task, gameConf.SubUrl))
+				str = fmt.Sprintf("&#11088;<b>Изменение в описании</b> бонуса %s №%d:\n%s\n", bonusNew.Name, bonusNew.Number, ReplaceTag(bonusNew.Task, gameConf.SubUrl))
 				if bonusNew.SecondsLeft != 0 {
-					str += fmt.Sprintf("&#9200;Время на выполнение бонуса ограниченно: %s\n", convertTimeSec(bonusNew.SecondsLeft))
+					str += fmt.Sprintf("&#9200;Время на выполнение бонуса ограниченно: %s\n", ConvertTimeSec(bonusNew.SecondsLeft))
 				}
 				msgBot.ChannelMessage = str
 				webToBot <- msgBot
 				msgBot.ChannelMessage = ""
 				//if text have location
-				sendLocation(searchLocation(bonusNew.Task), webToBot)
+				SendLocation(SearchLocation(bonusNew.Task), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(bonusNew.Task), webToBot)
+				SendPhoto(SearchPhoto(bonusNew.Task), webToBot)
 			}
 			// проверка на изменение текста
 			if old[numberNew].Help != bonusNew.Help {
 				if bonusNew.IsAnswered {
-					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в бонусе %s №%d (награда %s):\n%s\n", bonusNew.Name, bonusNew.Number, convertTimeSec(bonusNew.AwardTime), replaceTag(bonusNew.Help, gameConf.SubUrl))
+					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в бонусе %s №%d (награда %s):\n%s\n", bonusNew.Name, bonusNew.Number, ConvertTimeSec(bonusNew.AwardTime), ReplaceTag(bonusNew.Help, gameConf.SubUrl))
 				} else {
-					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в бонусе %s №%d:\n%s\n", bonusNew.Name, bonusNew.Number, replaceTag(bonusNew.Help, gameConf.SubUrl))
+					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение</b> в бонусе %s №%d:\n%s\n", bonusNew.Name, bonusNew.Number, ReplaceTag(bonusNew.Help, gameConf.SubUrl))
 				}
 
 				webToBot <- msgBot
 				msgBot.ChannelMessage = ""
 				//if text have location
-				sendLocation(searchLocation(bonusNew.Help), webToBot)
+				SendLocation(SearchLocation(bonusNew.Help), webToBot)
 				//if text have img
-				sendPhoto(searchPhoto(bonusNew.Help), webToBot)
+				SendPhoto(SearchPhoto(bonusNew.Help), webToBot)
 			}
 			// проверка, что уже отправляли
 			if bonusNew.SecondsToStart != old[numberNew].SecondsToStart {
 				// будет доступен через
-				msgBot.ChannelMessage = timeToBonuses(bonusNew)
+				msgBot.ChannelMessage = TimeToBonuses(bonusNew)
 				webToBot <- msgBot
 			}
 		} else {
-			str = fmt.Sprintf("&#11088;<b>Новый бонус</b> %s №%d\n%s\n", bonusNew.Name, bonusNew.Number, replaceTag(bonusNew.Task, gameConf.SubUrl))
+			str = fmt.Sprintf("&#11088;<b>Новый бонус</b> %s №%d\n%s\n", bonusNew.Name, bonusNew.Number, ReplaceTag(bonusNew.Task, gameConf.SubUrl))
 			if bonusNew.Help != "" {
-				str += fmt.Sprintf("Награда %s\n<b>Бонусная подсказка:</b>\n%s\n", convertTimeSec(bonusNew.AwardTime), replaceTag(bonusNew.Help, gameConf.SubUrl))
+				str += fmt.Sprintf("Награда %s\n<b>Бонусная подсказка:</b>\n%s\n", ConvertTimeSec(bonusNew.AwardTime), ReplaceTag(bonusNew.Help, gameConf.SubUrl))
 			}
 			msgBot.ChannelMessage = str
 			webToBot <- msgBot
 			msgBot.ChannelMessage = ""
 			// задание
 			//if text have location
-			sendLocation(searchLocation(bonusNew.Task), webToBot)
+			SendLocation(SearchLocation(bonusNew.Task), webToBot)
 			//if text have img
-			sendPhoto(searchPhoto(bonusNew.Task), webToBot)
+			SendPhoto(SearchPhoto(bonusNew.Task), webToBot)
 			// ответ
 			//if text have location
-			sendLocation(searchLocation(bonusNew.Help), webToBot)
+			SendLocation(SearchLocation(bonusNew.Help), webToBot)
 			//if text have img
-			sendPhoto(searchPhoto(bonusNew.Help), webToBot)
+			SendPhoto(SearchPhoto(bonusNew.Help), webToBot)
 			// будет доступен через
-			msgBot.ChannelMessage = timeToBonuses(bonusNew)
+			msgBot.ChannelMessage = TimeToBonuses(bonusNew)
 			webToBot <- msgBot
 		}
 		msgBot.ChannelMessage = ""
 	}
 }
-func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
+func CompareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(newMessages) == 0) && (len(oldMessages) == 0) {
 		return
@@ -728,7 +728,7 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 					str += fmt.Sprintf("&#128495;<b>Сообщение изменено:</b>\n%s\n", model.MessageText)
 				}
 			} else {
-				str += fmt.Sprintf("&#128495;<b>Появилось сообщение</b>:\n&#128172;%s\n", replaceTag(model.MessageText, gameConf.SubUrl))
+				str += fmt.Sprintf("&#128495;<b>Появилось сообщение</b>:\n&#128172;%s\n", ReplaceTag(model.MessageText, gameConf.SubUrl))
 			}
 		}
 	} else {
@@ -750,7 +750,7 @@ func compareMessages(newMessages []MessagesStruct, oldMessages []MessagesStruct,
 	msgBot.MsgId = 0
 	webToBot <- msgBot
 }
-func compareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
+func CompareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigGameJSON, webToBot chan MessengerStyle) {
 	// если у нас всё нулевой длины, то нафиг нам идти дальше...
 	if (len(newTasks) == 0) && (len(oldTasks) == 0) {
 		return
@@ -773,7 +773,7 @@ func compareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigG
 		if numberNew < len(oldTasks) {
 			if newTask.TaskText != oldTasks[numberNew].TaskText {
 				if newTask.TaskText != "" {
-					str += fmt.Sprintf("&#10060;<b>Задание изменено</b>:\n%s", replaceTag(newTask.TaskText, gameConf.SubUrl))
+					str += fmt.Sprintf("&#10060;<b>Задание изменено</b>:\n%s", ReplaceTag(newTask.TaskText, gameConf.SubUrl))
 				} else {
 					str += "&#10060;<b>Задание удалено&#128465;!</b>"
 				}
@@ -781,13 +781,13 @@ func compareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigG
 				continue
 			}
 		} else {
-			str += fmt.Sprintf("&#10004;<b>Новое задание:</b>\n%s", replaceTag(newTask.TaskText, gameConf.SubUrl))
+			str += fmt.Sprintf("&#10004;<b>Новое задание:</b>\n%s", ReplaceTag(newTask.TaskText, gameConf.SubUrl))
 		}
 		msgBot.ChannelMessage = str
 		webToBot <- msgBot
 	}
 }
-func addUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
+func AddUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
 
 	var resp *http.Response
 	var body []byte
@@ -813,7 +813,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		}
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -822,7 +822,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 
@@ -848,7 +848,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		resp, err = client.Get(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx", game.SubUrl))
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -857,7 +857,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 		if regexpCaptain.MatchString(string(body)) {
@@ -870,7 +870,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 				break
 			}
 		}
-		enterGame(client, *game)
+		EnterGame(client, *game)
 		isErrAdd = true
 	}
 
@@ -895,7 +895,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		resp, err = client.PostForm(fmt.Sprintf("http://%s/Teams/TeamDetails.aspx?tid=%s", game.SubUrl, user.teamID), formData)
 		if err != nil || resp == nil {
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 		defer resp.Body.Close()
@@ -904,7 +904,7 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 		if err != nil {
 			log.Println(string(body))
 			log.Println(err)
-			enterGame(client, *game)
+			EnterGame(client, *game)
 			continue
 		}
 		if reg, _ := regexp.MatchString(fmt.Sprintf(`uid=%s">%s</a></td>\s+<td class="padL10">`, user.userID, user.userName), string(body)); reg {
@@ -924,11 +924,11 @@ func addUser(client *http.Client, game *ConfigGameJSON, inputString string) stri
 			}
 			return fmt.Sprintf("&#10133;Добавили игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 		}
-		enterGame(client, *game)
+		EnterGame(client, *game)
 	}
 	return fmt.Sprintf("&#10134;Не смогли добавить игрока <b>%s (%s)</b> в команду <b>%s (%s)</b>", user.userName, user.userID, user.teamName, user.teamID)
 }
-func timeToBonuses(bonus BonusesStruct) (str string) {
+func TimeToBonuses(bonus BonusesStruct) (str string) {
 	switch bonus.SecondsToStart {
 	case 60:
 		str = fmt.Sprintf("&#10004;<b>Бонус</b> %s №%d доступен через 1&#8419; минуту.\n", bonus.Name, bonus.Number)

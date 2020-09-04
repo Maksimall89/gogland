@@ -1,13 +1,39 @@
-package main
+package src
 
 import (
 	"encoding/json"
 	"log"
+	"net/http"
+	"net/http/cookiejar"
 	"os"
 	"strings"
+	"sync"
 )
 
-func (conf *ConfigGameJSON) init(str string) string {
+// Client information
+var (
+	CookieJar *cookiejar.Jar
+	Client    http.Client
+)
+
+// Buffer for information
+var (
+	BufModel Model
+)
+
+// State bot
+var (
+	IsWork   bool
+	IsWorkMu sync.Mutex
+)
+
+// State answer block
+var (
+	IsAnswerBlock   bool
+	IsAnswerBlockMu sync.Mutex
+)
+
+func (conf *ConfigGameJSON) Init(str string) string {
 	args := strings.Split(str, " ")
 	if len(args) < 3 {
 		return "Need more arguments! <code>/start login password http://DEMO.en.cx/GameDetails.aspx?gid=1</code>"
@@ -19,11 +45,11 @@ func (conf *ConfigGameJSON) init(str string) string {
 	conf.Password = args[1]
 	conf.URLGame = args[2]
 
-	conf.separateURL()
+	conf.SeparateURL()
 
 	return ""
 }
-func (conf *ConfigGameJSON) separateURL() {
+func (conf *ConfigGameJSON) SeparateURL() {
 	pathUrl := strings.Split(conf.URLGame, "/")
 	if len(pathUrl) > 2 {
 		conf.SubUrl = pathUrl[2]
@@ -36,7 +62,7 @@ func (conf *ConfigGameJSON) separateURL() {
 		conf.Gid = pathGid[1]
 	}
 }
-func (conf *ConfigBot) setEnv() {
+func (conf *ConfigBot) SetEnv() {
 	if value, exists := os.LookupEnv("TelegramBotToken"); exists {
 		conf.TelegramBotToken = value
 	}
@@ -44,11 +70,11 @@ func (conf *ConfigBot) setEnv() {
 		conf.OwnName = value
 	}
 }
-func (conf *ConfigBot) init(path string) {
+func (conf *ConfigBot) Init(path string) {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Println(err)
-		conf.setEnv()
+		conf.SetEnv()
 		return
 	}
 	defer file.Close()
@@ -57,31 +83,7 @@ func (conf *ConfigBot) init(path string) {
 	if err != nil {
 		log.Println(err)
 	}
-	conf.setEnv()
-}
-
-// config.json
-func (conf *ConfigGameJSON) initTest(path string) {
-	var configuration ConfigBot
-	configuration.init(path)
-
-	if value, exists := os.LookupEnv("TestNickName"); exists {
-		conf.NickName = value
-	} else {
-		conf.NickName = configuration.TestNickName
-	}
-	if value, exists := os.LookupEnv("TestPassword"); exists {
-		conf.Password = value
-	} else {
-		conf.Password = configuration.TestPassword
-	}
-	if value, exists := os.LookupEnv("TestURLGame"); exists {
-		conf.URLGame = value
-	} else {
-		conf.URLGame = configuration.TestURLGame
-	}
-
-	conf.separateURL()
+	conf.SetEnv()
 }
 
 /*
