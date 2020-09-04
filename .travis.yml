@@ -13,8 +13,8 @@ jobs:
       script:
         - go test -v -run Types
         - go test -v -run General
-        - go test -v -run Help
         - go test -v -run Engine
+        - go test -v ./help/
     - stage: "Code Quality"
       name: "Code Quality Analysis"
       before_script:

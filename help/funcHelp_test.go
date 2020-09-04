@@ -1,4 +1,4 @@
-package main
+package help
 
 import (
 	"strings"
@@ -23,7 +23,7 @@ func TestHelpSearchAnagramAndMaskWord(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := searchAnagramAndMaskWord(pair.input, pair.typeSearch)
+		result := SearchAnagramAndMaskWord(pair.input, pair.typeSearch)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -43,7 +43,7 @@ func TestHelpAssociations(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := associations(pair.input)
+		result := Associations(pair.input)
 		if !strings.Contains(result, pair.output) {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -75,13 +75,13 @@ func TestHelpTransferToAlphabetToWord(t *testing.T) {
 	}
 
 	for _, pair := range testsN2W {
-		result := transferToAlphabet(pair.input, true)
+		result := TransferToAlphabet(pair.input, true)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
 	}
 	for _, pair := range testsW2N {
-		result := transferToAlphabet(pair.input, false)
+		result := TransferToAlphabet(pair.input, false)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -105,7 +105,7 @@ func TestHelpMendeleevTable(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := tableMendeleev(pair.input)
+		result := TableMendeleev(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -126,7 +126,7 @@ func TestHelpMorse(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := morse(pair.input)
+		result := Morse(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -147,7 +147,7 @@ func TestHelpBrail(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := braille(pair.input)
+		result := Braille(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -175,7 +175,7 @@ func TestHelpBin(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := bin(pair.input, pair.attribute)
+		result := Bin(pair.input, pair.attribute)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -196,7 +196,7 @@ func TestHelpAutoCode(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := autoCode(pair.input)
+		result := AutoCode(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}
@@ -219,7 +219,7 @@ func TestHelpTranslateQwerty(t *testing.T) {
 	}
 
 	for _, pair := range tests {
-		result := translateQwerty(pair.input)
+		result := TranslateQwerty(pair.input)
 		if result != pair.output {
 			t.Errorf("For %s\nexpected %s\ngot %s", pair.input, pair.output, result)
 		}

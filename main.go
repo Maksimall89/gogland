@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"gogland/help"
 	"gopkg.in/telegram-bot-api.v4"
 	"log"
 	"math/rand"
@@ -308,7 +309,7 @@ func main() {
 		case "n2w":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, transferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>", update.Message.MessageID, bot)
 				}
@@ -316,7 +317,7 @@ func main() {
 		case "w2n":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, transferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>", update.Message.MessageID, bot)
 				}
@@ -324,7 +325,7 @@ func main() {
 		case "ac":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, autoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.AutoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>", update.Message.MessageID, bot)
 				}
@@ -332,7 +333,7 @@ func main() {
 		case "ana":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, searchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
 				}
@@ -340,7 +341,7 @@ func main() {
 		case "bra":
 			go func() {
 				if len(update.Message.CommandArguments()) > 5 {
-					_ = sendMessageTelegram(chatId, braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.Braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)
 				}
@@ -348,7 +349,7 @@ func main() {
 		case "smask":
 			go func() {
 				if len(update.Message.CommandArguments()) > 1 {
-					_ = sendMessageTelegram(chatId, searchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
 				}
@@ -356,7 +357,7 @@ func main() {
 		case "mt":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, tableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.TableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>", update.Message.MessageID, bot)
 				}
@@ -364,7 +365,7 @@ func main() {
 		case "mz":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.Morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>", update.Message.MessageID, bot)
 				}
@@ -372,7 +373,7 @@ func main() {
 		case "ass":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.Associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>", update.Message.MessageID, bot)
 				}
@@ -380,7 +381,7 @@ func main() {
 		case "b2d":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>", update.Message.MessageID, bot)
 				}
@@ -388,7 +389,7 @@ func main() {
 		case "d2b":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>", update.Message.MessageID, bot)
 				}
@@ -396,7 +397,7 @@ func main() {
 		case "qw":
 			go func() {
 				if len(update.Message.CommandArguments()) > 0 {
-					_ = sendMessageTelegram(chatId, translateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					_ = sendMessageTelegram(chatId, help.TranslateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>", update.Message.MessageID, bot)
 				}
