@@ -96,11 +96,11 @@ func TestEngineSendCode(t *testing.T) {
 }
 func TestEngineGetPenalty(t *testing.T) {
 	t.Parallel()
-	t.Skip("Test need real penaltyID")
+	// "Test need real penaltyID"
+	t.Skipped()
 	penaltyID := "1111"
 
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
-
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 

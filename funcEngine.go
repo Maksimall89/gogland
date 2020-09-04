@@ -71,7 +71,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			if msg.ChannelMessage == "stop" {
 				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли &#128546; \nДля перезапуска используйте /restart"
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return errors.New("Bot stop")
 			}
@@ -97,7 +99,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 1:
 				msgBot.ChannelMessage = "&#9940;Игра не существует!"
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Bot %s stop  - case 0.\n", game.Gid)
 				return errors.New("ERROR")
 			case 5:
@@ -105,7 +109,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 6:
 				msgBot.ChannelMessage = "Игра закончилась."
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 6.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 7:
@@ -127,7 +133,9 @@ func startGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 17:
 				msgBot.ChannelMessage = "&#9940;Игра закончена!"
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 17.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 19:

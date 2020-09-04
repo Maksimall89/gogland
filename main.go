@@ -11,19 +11,34 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 )
 
+// Client information
 var (
-	bufModel      Model
-	photoMap      map[int]string
-	locationMap   map[string]float64
-	cookieJar     *cookiejar.Jar
-	client        http.Client
-	isAnswerBlock bool
-	isWork        bool
+	cookieJar *cookiejar.Jar
+	client    http.Client
 )
 
+// Buffer for information
+var (
+	bufModel Model
+)
+
+// State bot
+var (
+	isWork   bool
+	isWorkMu sync.Mutex
+)
+
+// State answer block
+var (
+	isAnswerBlock   bool
+	isAnswerBlockMu sync.Mutex
+)
+
+// Web-server status
 func MainHandler(resp http.ResponseWriter, _ *http.Request) {
 	_, _ = resp.Write([]byte("Hi there! I'm telegram bot @gogland_bot. My owner @maksimall89"))
 }
@@ -154,7 +169,9 @@ func main() {
 			continue
 		}
 
+		isWorkMu.Lock()
 		if !isWork {
+			isWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
 			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
@@ -164,6 +181,7 @@ func main() {
 				break
 			}
 		} else {
+			isWorkMu.Unlock()
 			// Если пишут в другой чат ему, то игнор
 			if chatId != update.Message.Chat.ID {
 				continue
@@ -181,10 +199,6 @@ func main() {
 			}()
 		case "faq":
 			_ = sendMessageTelegram(chatId, `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`, 0, bot)
-		case "stop":
-			msgChannel.ChannelMessage = "stop"
-			botToWeb <- msgChannel
-			isWork = false
 		case "postfix":
 			confJSON.Postfix = update.Message.CommandArguments()
 			_ = sendMessageTelegram(chatId, "Постфикс принят", 0, bot)
@@ -195,9 +209,14 @@ func main() {
 			*isBonus = true
 			go sendCode(&client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 		case "pause":
+			isAnswerBlockMu.Lock()
 			isAnswerBlock = true
+			isAnswerBlockMu.Unlock()
 			_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
 		case "resume":
+			isAnswerBlockMu.Lock()
+			isAnswerBlock = false
+			isAnswerBlockMu.Unlock()
 			_ = sendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
@@ -205,6 +224,12 @@ func main() {
 			} else {
 				_ = sendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
 			}
+		case "stop":
+			isWorkMu.Lock()
+			isWork = false
+			isWorkMu.Unlock()
+			msgChannel.ChannelMessage = "stop"
+			botToWeb <- msgChannel
 		case "restart":
 			log.Printf("RESTART JSON %s change  config.", update.Message.From.UserName)
 			// create cookie
@@ -216,7 +241,9 @@ func main() {
 			go workerJSON(&client, &confJSON, botToWeb, webToBot, &isWork, &isAnswerBlock)
 			defer close(botToWeb)
 			defer close(webToBot)
+			isWorkMu.Lock()
 			isWork = true
+			isWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
@@ -235,14 +262,18 @@ func main() {
 				defer close(webToBot)
 
 				_ = sendMessageTelegram(chatId, "All change is apply JSON", 0, bot)
+				isWorkMu.Lock()
 				isWork = true
+				isWorkMu.Unlock()
 				chatId = update.Message.Chat.ID
 			} else {
+				isWorkMu.Lock()
 				if isWork {
 					_ = sendMessageTelegram(chatId, "I work!", 0, bot)
 				} else {
 					_ = sendMessageTelegram(chatId, "You is't my own!", 0, bot)
 				}
+				isWorkMu.Unlock()
 				log.Printf("%s try to change config!", update.Message.From.UserName)
 			}
 		case "hints":
@@ -406,8 +437,9 @@ func main() {
 			go func() {
 				sendLocation(searchLocation(update.Message.Text), webToBot)
 			}()
-
+			isWorkMu.Lock()
 			if isWork {
+				isWorkMu.Unlock()
 				// WTF symbol what I need ignore
 				if strings.ContainsAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") {
 					break
@@ -415,6 +447,7 @@ func main() {
 				// check  codes
 				if strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789!?") {
 					*isBonus = false
+					isAnswerBlockMu.Lock()
 					if !isAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
 						arrCodes := strings.Split(update.Message.Text, "\n")
 						for _, code := range arrCodes {
@@ -423,8 +456,10 @@ func main() {
 					} else {
 						_ = sendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
 					}
+					isAnswerBlockMu.Unlock()
 				}
 			}
+			isWorkMu.Unlock()
 		}
 	}
 }
