@@ -97,10 +97,10 @@ func TestEngineSendCode(t *testing.T) {
 func TestEngineGetPenalty(t *testing.T) {
 	t.Parallel()
 	t.Skip("Test need real penaltyID")
+
 	penaltyID := "1111"
 
 	rand.Seed(time.Now().UTC().UnixNano()) // real random
-
 	webToBotTEST := make(chan MessengerStyle, 10)
 	var msgChanel MessengerStyle
 
@@ -502,8 +502,7 @@ func TestEngineCompareTasks(t *testing.T) {
 }
 func TestEngineAddUser(t *testing.T) {
 	t.Parallel()
-	// "Test need real new member for team"
-	t.Skipped()
+	t.Skip("Test need real new member for team")
 
 	cookieJar, _ := cookiejar.New(nil)
 	clientTEST := &http.Client{

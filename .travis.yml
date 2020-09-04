@@ -13,10 +13,10 @@ jobs:
       script:
         - go test -v -run Types
         - go test -v -run General
-        - go test -v -run Help
         - go test -v -run Engine
+        - go test -v ./help/
     - stage: "Code Quality"
       name: "Code Quality Analysis"
       before_script:
         - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.30.0
-      script: golangci-lint run -v
+      script: golangci-lint run -v --skip-files funcEngine_test.go

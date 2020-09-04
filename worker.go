@@ -3,14 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
-	"time"
 )
 
 func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan MessengerStyle, webToBot chan MessengerStyle, isWork *bool, isAnswerBlock *bool) string {
-	photoMap = make(map[int]string)
-	locationMap = make(map[string]float64)
+	photoMap := make(map[int]string)
+	locationMap := make(map[string]float64)
 
 	var str string
 	var modelGame Model
@@ -24,11 +22,14 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 	webToBot <- msgBot
 
 	// Получаем актуальное состояние игры
+	isWorkMu.Lock()
 	err := startGame(client, game, isWork, botToWeb, webToBot)
 	if err != nil {
 		*isWork = false
+		isWorkMu.Unlock()
 		return "Bot off"
 	}
+	isWorkMu.Unlock()
 
 	// Цикл самой игры
 	for {
@@ -39,7 +40,9 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				msgBot.ChannelMessage = "<b>Бот выключен.</b> \nДля перезапуска используйте /restart"
 				msgBot.MsgId = 0 // clear replay
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return "Bot stop"
 			}
@@ -50,7 +53,9 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			if modelGame.Event == 6 || modelGame.Event == 17 {
 				msgBot.ChannelMessage = "&#128293;Игра завершена!\n<b>Вы молодцы, штаб ОГОНЬ!</b>"
 				webToBot <- msgBot
+				isWorkMu.Lock()
 				*isWork = false
+				isWorkMu.Unlock()
 				log.Printf("Game finished %s", game.URLGame)
 				return "FINISH GAME"
 			}
@@ -84,7 +89,9 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 						str += "игрока"
 					}
 					str += fmt.Sprintf("за %s\nДля возобновления наберите /resume\nЧтобы отправить бонусные коды введите: /b <code>код</code>\n\n", convertTimeSec(modelGame.Level.AttemtsPeriod))
+					isAnswerBlockMu.Lock()
 					*isAnswerBlock = true
+					isAnswerBlockMu.Unlock()
 				}
 				// Сообщения
 				str += getFirstMessages(modelGame.Level.Messages, *game)
@@ -144,7 +151,6 @@ func workerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			// копируем всё в буфер
 			bufModel = modelGame
 			game.LevelNumber = modelGame.Level.Number
-			time.Sleep(time.Duration(70000 + rand.Intn(1000)))
 		}
 	}
 }

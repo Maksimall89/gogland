@@ -1,4 +1,4 @@
-package main
+package help
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ import (
 
 var strNotWords = "<b>Слов не обнаружено.</b>"
 
-func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
+func SearchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
 	var answer struct {
 		URL             string `json:"url"`
 		PageDescription struct {
@@ -77,7 +77,7 @@ func searchAnagramAndMaskWord(text string, isAnagram bool) (str string) {
 	}
 	return str
 }
-func associations(text string) string {
+func Associations(text string) string {
 	var answer struct {
 		Associations []struct {
 			Name              string  `json:"name"`
@@ -125,7 +125,7 @@ func associations(text string) string {
 
 	return text
 }
-func tableMendeleev(text string) string {
+func TableMendeleev(text string) string {
 	var attributeSearch bool
 	type table struct {
 		name      string
@@ -293,7 +293,7 @@ func tableMendeleev(text string) string {
 	}
 	return text
 }
-func morse(text string) string {
+func Morse(text string) string {
 	type table struct {
 		name      string
 		rusSymbol string
@@ -377,7 +377,7 @@ func morse(text string) string {
 	}
 	return text
 }
-func autoCode(text string) string {
+func AutoCode(text string) string {
 
 	type table struct {
 		code   string
@@ -621,7 +621,7 @@ func autoCode(text string) string {
 	}
 	return text
 }
-func braille(text string) string {
+func Braille(text string) string {
 	type table struct {
 		code      string
 		rusSymbol string
@@ -697,7 +697,7 @@ func braille(text string) string {
 	}
 	return text
 }
-func bin(text string, attribute bool) string {
+func Bin(text string, attribute bool) string {
 	var t int
 	var d int
 
@@ -744,7 +744,7 @@ func bin(text string, attribute bool) string {
 	}
 	return text
 }
-func transferToAlphabet(text string, types bool) string {
+func TransferToAlphabet(text string, types bool) string {
 	rusAlphabet := []string{"а", "б", "в", "г", "д", "е", "ё", "ж", "з", "и", "й", "к", "л", "м", "н", "о", "п", "р", "с", "т", "у", "ф", "х", "ц", "ч", "ш", "щ", "ъ", "ы", "ь", "э", "ю", "я"}
 	engAlphabet := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "-", "-", "-", "-", "-", "-", "-"}
 
@@ -789,7 +789,7 @@ func transferToAlphabet(text string, types bool) string {
 	}
 	return text
 }
-func translateQwerty(text string) string {
+func TranslateQwerty(text string) string {
 	type table struct {
 		eng string
 		rus string
