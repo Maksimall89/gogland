@@ -387,7 +387,7 @@ func GetFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str st
 				// Если доступен и отгадан
 				str += fmt.Sprintf("&#10004;<b>Бонус №%d</b> %s (<b>выполнен</b>, награда: %s)\n", bonus.Number, bonus.Name, ConvertTimeSec(bonus.AwardTime))
 			} else {
-				// Если доступен и не отгадан
+				// Если доступен и не отгCompareMessagesадан
 				str += fmt.Sprintf("&#128488;<b>Бонус №%d</b> %s\n%s\n", bonus.Number, bonus.Name, ReplaceTag(bonus.Task, gameConfig.SubUrl))
 			}
 		} else {
@@ -400,13 +400,12 @@ func GetFirstBonuses(bonuses []BonusesStruct, gameConfig ConfigGameJSON) (str st
 	}
 	return str
 }
-func GetFirstSector(level LevelStruct) (str string) {
+func GetFirstSector(level LevelStruct) string {
 	if level.SectorsLeftToClose > 0 {
-		str = fmt.Sprintf("&#128269;Вам нужно найти <b>%d из %d</b> секторов.\n", level.SectorsLeftToClose, len(level.Sectors))
+		return fmt.Sprintf("&#128269;Вам нужно найти <b>%d из %d</b> секторов.\n", level.SectorsLeftToClose, len(level.Sectors))
 	} else {
-		str = "&#128269;На уровне 1 код.\n"
+		return "&#128269;На уровне 1 код.\n"
 	}
-	return str
 }
 func GetFirstTimer(level LevelStruct) (str string) {
 	if level.Timeout == 0 {
@@ -463,53 +462,45 @@ func GetFirstHelps(helps []HelpsStruct, gameConfig ConfigGameJSON) (str string) 
 		return ""
 	}
 	if helps[0].IsPenalty {
-		if len(helps) > 0 {
-			for _, penaltyHelp := range helps {
-				// проверяем через сколько будет доступна подсказка
-				if penaltyHelp.RemainSeconds > 0 {
-					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d будет через %s.\n", penaltyHelp.Number, ConvertTimeSec(penaltyHelp.RemainSeconds))
-				}
-				// Если подсказка уже доступна и взята
-				if penaltyHelp.HelpText != "" {
-					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d:\n%s\n\n", penaltyHelp.Number, ReplaceTag(penaltyHelp.HelpText, gameConfig.SubUrl))
-					continue
-				}
-				if penaltyHelp.HelpText == "" {
-					// Если подсказка уже доступна, но не взята
-					if penaltyHelp.RemainSeconds == 0 {
-						str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d доступна.\n", penaltyHelp.Number)
-						// Проверяем, что нужно подтеверждение и мы не взяли ещё подсказку
-					}
-					if penaltyHelp.RequestConfirm {
-						str += fmt.Sprintf("&#9888;Треубется подтверждение взятия штрафной подсказки: %d\n. Чтобы её взять введите: <code>/getPenalty %d</code>", penaltyHelp.HelpId, penaltyHelp.HelpId)
-					}
-					// Штраф за взятие если ещё ёё не взяли
-					if penaltyHelp.Penalty != 0 {
-						str += fmt.Sprintf("&#9888;Штраф за взятие: %s\n", ConvertTimeSec(penaltyHelp.Penalty))
-					}
-					// Описание подсказки если ещё её не взяли
-					if penaltyHelp.PenaltyComment != "" {
-						str += fmt.Sprintf("<b>Описание:</b> %s\n", ReplaceTag(penaltyHelp.PenaltyComment, gameConfig.SubUrl))
-					}
-				}
-				str += "\n"
+		for _, penaltyHelp := range helps {
+			// проверяем через сколько будет доступна подсказка
+			if penaltyHelp.RemainSeconds > 0 {
+				str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d будет через %s.\n", penaltyHelp.Number, ConvertTimeSec(penaltyHelp.RemainSeconds))
 			}
-		} else {
-			str = ""
+			// Если подсказка уже доступна и взята
+			if penaltyHelp.HelpText != "" {
+				str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d:\n%s\n\n", penaltyHelp.Number, ReplaceTag(penaltyHelp.HelpText, gameConfig.SubUrl))
+				continue
+			}
+			if penaltyHelp.HelpText == "" {
+				// Если подсказка уже доступна, но не взята
+				if penaltyHelp.RemainSeconds == 0 {
+					str += fmt.Sprintf("&#10004;<b>Штрафная подсказка</b> №%d доступна.\n", penaltyHelp.Number)
+					// Проверяем, что нужно подтеверждение и мы не взяли ещё подсказку
+				}
+				if penaltyHelp.RequestConfirm {
+					str += fmt.Sprintf("&#9888;Треубется подтверждение взятия штрафной подсказки: %d\n. Чтобы её взять введите: <code>/getPenalty %d</code>", penaltyHelp.HelpId, penaltyHelp.HelpId)
+				}
+				// Штраф за взятие если ещё ёё не взяли
+				if penaltyHelp.Penalty != 0 {
+					str += fmt.Sprintf("&#9888;Штраф за взятие: %s\n", ConvertTimeSec(penaltyHelp.Penalty))
+				}
+				// Описание подсказки если ещё её не взяли
+				if penaltyHelp.PenaltyComment != "" {
+					str += fmt.Sprintf("<b>Описание:</b> %s\n", ReplaceTag(penaltyHelp.PenaltyComment, gameConfig.SubUrl))
+				}
+			}
+			str += "\n"
 		}
 	} else {
-		if len(helps) > 0 {
-			for _, help := range helps {
-				str += fmt.Sprintf("&#10004;<b>Подсказка</b> №%d ", help.Number)
-				if help.RemainSeconds > 0 {
-					str += fmt.Sprintf("будет через %s.\n", ConvertTimeSec(help.RemainSeconds))
-				} else {
-					str += fmt.Sprintf("\n%s\n", ReplaceTag(help.HelpText, gameConfig.SubUrl))
-				}
-				str += "\n"
+		for _, help := range helps {
+			str += fmt.Sprintf("&#10004;<b>Подсказка</b> №%d ", help.Number)
+			if help.RemainSeconds > 0 {
+				str += fmt.Sprintf("будет через %s.\n", ConvertTimeSec(help.RemainSeconds))
+			} else {
+				str += fmt.Sprintf("\n%s\n", ReplaceTag(help.HelpText, gameConfig.SubUrl))
 			}
-		} else {
-			str = "&#10060;Подсказок нет!\n"
+			str += "\n"
 		}
 	}
 	return str
@@ -788,7 +779,6 @@ func CompareTasks(newTasks []TaskStruct, oldTasks []TaskStruct, gameConf ConfigG
 	}
 }
 func AddUser(client *http.Client, game *ConfigGameJSON, inputString string) string {
-
 	var resp *http.Response
 	var body []byte
 	var err error
