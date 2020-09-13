@@ -14,7 +14,7 @@ import (
 )
 
 func LogInit() {
-	path := "log" // name folder for logs
+	path := "../log" // name folder for logs
 	// check what folder log is exist
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
