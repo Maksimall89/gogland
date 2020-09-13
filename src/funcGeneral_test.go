@@ -10,7 +10,7 @@ import (
 )
 
 func TestGeneralLogInit(t *testing.T) {
-	path := "log"
+	path := "../log"
 	err := os.RemoveAll(path)
 	if err != nil {
 		t.Errorf("Dir %s did not delete", path)
