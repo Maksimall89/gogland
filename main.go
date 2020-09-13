@@ -151,9 +151,121 @@ func main() {
 			src.IsWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
-			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "bonuses":
+			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "time", "bonuses":
 				_ = src.SendMessageTelegram(chatId, "Игра ещё не началась.", 0, bot)
 				continue
+			case "help":
+				go func() {
+					var str string
+					for _, item := range commandArr {
+						str += item + "\n"
+					}
+					_ = src.SendMessageTelegram(chatId, str, 0, bot)
+				}()
+			case "faq":
+				_ = src.SendMessageTelegram(chatId, `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`, 0, bot)
+			case "joke":
+				if len(configuration.Jokes) > 0 {
+					_ = src.SendMessageTelegram(chatId, configuration.Jokes[rand.Intn(len(configuration.Jokes))], 0, bot)
+				} else {
+					_ = src.SendMessageTelegram(chatId, "Шуток нет.", 0, bot)
+				}
+			case "n2w":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "w2n":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "ac":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.AutoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "ana":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "bra":
+				go func() {
+					if len(update.Message.CommandArguments()) > 5 {
+						_ = src.SendMessageTelegram(chatId, help.Braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "smask":
+				go func() {
+					if len(update.Message.CommandArguments()) > 1 {
+						_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "mt":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.TableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "mz":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.Morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "ass":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.Associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "b2d":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "d2b":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>", update.Message.MessageID, bot)
+					}
+				}()
+			case "qw":
+				go func() {
+					if len(update.Message.CommandArguments()) > 0 {
+						_ = src.SendMessageTelegram(chatId, help.TranslateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
+					} else {
+						_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>", update.Message.MessageID, bot)
+					}
+				}()
 			default:
 				break
 			}
@@ -166,16 +278,6 @@ func main() {
 		}
 
 		switch strings.ToLower(update.Message.Command()) {
-		case "help":
-			go func() {
-				var str string
-				for _, item := range commandArr {
-					str += item + "\n"
-				}
-				_ = src.SendMessageTelegram(chatId, str, 0, bot)
-			}()
-		case "faq":
-			_ = src.SendMessageTelegram(chatId, `<code>Бот отправляет в движок все сообщения содержащие английские буквы(word), слово-буквы (слово1) не разделенные пробелом. Чтобы принудительно отправить код необходимо использовать восклицательный знак — "!". Если на уровне есть ограничение на ввод, то бот остановит прием кодов и продолжит их принимать на следующем уровне автоматически. Если на уровне есть координаты, то бот их преобразует в GPS-координаты и отправит как локацию в чат, также бот преобразует все сообщения в чате написанные в одну строку 52.4456 52.4563 в координаты, при этом координаты в тексте задания, который придёт вам в один клик копируются. Все скрытие ссылки под картинками будут также отмечены в чате, а сами картинки всегда скидываются отдельным сообщением для удобства. И самое главное помните, что бот не волшебник, он только учутся и за ним нужно следить.</code>`, 0, bot)
 		case "postfix":
 			confJSON.Postfix = update.Message.CommandArguments()
 			_ = src.SendMessageTelegram(chatId, "Постфикс принят", 0, bot)
@@ -292,7 +394,7 @@ func main() {
 					_ = src.SendMessageTelegram(chatId, msgLevel, 0, bot)
 				}
 			}()
-		case "timer":
+		case "timer", "time":
 			go func() {
 				_ = src.SendMessageTelegram(chatId, src.GetFirstTimer(src.BufModel.Level), 0, bot)
 			}()
@@ -306,108 +408,6 @@ func main() {
 					_ = src.SendMessageTelegram(chatId, src.GetFirstBonuses(src.BufModel.Level.Bonuses, confJSON), 0, bot)
 				} else {
 					_ = src.SendMessageTelegram(chatId, "Бонусов в игре нет!\n", 0, bot)
-				}
-			}()
-		case "joke":
-			if len(configuration.Jokes) > 0 {
-				_ = src.SendMessageTelegram(chatId, configuration.Jokes[rand.Intn(len(configuration.Jokes))], 0, bot)
-			} else {
-				_ = src.SendMessageTelegram(chatId, "Шуток нет.", 0, bot)
-			}
-		case "n2w":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w 22 5</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "w2n":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.TransferToAlphabet(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/n2w А D</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "ac":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.AutoCode(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ac 18</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "ana":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ana сел</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "bra":
-			go func() {
-				if len(update.Message.CommandArguments()) > 5 {
-					_ = src.SendMessageTelegram(chatId, help.Braille(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/bra 101000</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "smask":
-			go func() {
-				if len(update.Message.CommandArguments()) > 1 {
-					_ = src.SendMessageTelegram(chatId, help.SearchAnagramAndMaskWord(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/smask а?в*</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "mt":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.TableMendeleev(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mt 11</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "mz":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.Morse(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/mz .-</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "ass":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.Associations(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/ass лето</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "b2d":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), false), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/b2d 101</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "d2b":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.Bin(update.Message.CommandArguments(), true), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/d2b 99</code>", update.Message.MessageID, bot)
-				}
-			}()
-		case "qw":
-			go func() {
-				if len(update.Message.CommandArguments()) > 0 {
-					_ = src.SendMessageTelegram(chatId, help.TranslateQwerty(update.Message.CommandArguments()), update.Message.MessageID, bot)
-				} else {
-					_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/qw ц z</code>", update.Message.MessageID, bot)
 				}
 			}()
 		default:
