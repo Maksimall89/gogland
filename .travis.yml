@@ -14,6 +14,7 @@ jobs:
         - go test -v -run Types
         - go test -v -run General
         - go test -v -run Engine
+        - go test -v -run Worker
         - go test -v ./help/
     - stage: "Code Quality"
       name: "Code Quality Analysis"
