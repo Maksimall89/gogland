@@ -146,9 +146,9 @@ func main() {
 			continue
 		}
 
-		src.IsWorkMu.Lock()
+		//src.IsWorkMu.Lock()
 		if !src.IsWork {
-			src.IsWorkMu.Unlock()
+			//	src.IsWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 			switch strings.ToLower(update.Message.Command()) {
 			case "b", "pause", "resume", "restart", "hints", "penalty", "codesall", "codes", "task", "msg", "timer", "time", "bonuses":
@@ -270,7 +270,7 @@ func main() {
 				break
 			}
 		} else {
-			src.IsWorkMu.Unlock()
+			//src.IsWorkMu.Unlock()
 			// Если пишут в другой чат ему, то игнор
 			if chatId != update.Message.Chat.ID {
 				continue
@@ -288,14 +288,14 @@ func main() {
 			*isBonus = true
 			go src.SendCode(&src.Client, &confJSON, update.Message.CommandArguments(), isBonus, webToBot, update.Message.MessageID)
 		case "pause":
-			src.IsAnswerBlockMu.Lock()
+			//src.IsAnswerBlockMu.Lock()
 			src.IsAnswerBlock = true
-			src.IsAnswerBlockMu.Unlock()
+			//src.IsAnswerBlockMu.Unlock()
 			_ = src.SendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume Для ввода бонусных кодов /b", 0, bot)
 		case "resume":
-			src.IsAnswerBlockMu.Lock()
+			//	src.IsAnswerBlockMu.Lock()
 			src.IsAnswerBlock = false
-			src.IsAnswerBlockMu.Unlock()
+			//	src.IsAnswerBlockMu.Unlock()
 			_ = src.SendMessageTelegram(chatId, "Приём кодов <b>возобновлён</b>.\nДля приостановки наберите /pause Для ввода бонусных кодов /b", 0, bot)
 		case "getPenalty":
 			if len(update.Message.CommandArguments()) > 0 {
@@ -304,9 +304,9 @@ func main() {
 				_ = src.SendMessageTelegram(chatId, "Недостаточно символов. Необходимо отправить: <code>/getPenalty 1111</code>", 0, bot)
 			}
 		case "stop":
-			src.IsWorkMu.Lock()
+			//src.IsWorkMu.Lock()
 			src.IsWork = false
-			src.IsWorkMu.Unlock()
+			//src.IsWorkMu.Unlock()
 			msgChannel.ChannelMessage = "stop"
 			botToWeb <- msgChannel
 		case "restart":
@@ -320,9 +320,9 @@ func main() {
 			go src.WorkerJSON(&src.Client, &confJSON, botToWeb, webToBot, &src.IsWork, &src.IsAnswerBlock)
 			defer close(botToWeb)
 			defer close(webToBot)
-			src.IsWorkMu.Lock()
+			//src.IsWorkMu.Lock()
 			src.IsWork = true
-			src.IsWorkMu.Unlock()
+			//src.IsWorkMu.Unlock()
 			chatId = update.Message.Chat.ID
 		case "start":
 			// set config can only owner
@@ -341,18 +341,18 @@ func main() {
 				defer close(webToBot)
 
 				_ = src.SendMessageTelegram(chatId, "All change is apply JSON", 0, bot)
-				src.IsWorkMu.Lock()
+				//	src.IsWorkMu.Lock()
 				src.IsWork = true
-				src.IsWorkMu.Unlock()
+				//	src.IsWorkMu.Unlock()
 				chatId = update.Message.Chat.ID
 			} else {
-				src.IsWorkMu.Lock()
+				//src.IsWorkMu.Lock()
 				if src.IsWork {
 					_ = src.SendMessageTelegram(chatId, "I work!", 0, bot)
 				} else {
 					_ = src.SendMessageTelegram(chatId, "You is't my own!", 0, bot)
 				}
-				src.IsWorkMu.Unlock()
+				//src.IsWorkMu.Unlock()
 				log.Printf("%s try to change config!", update.Message.From.UserName)
 			}
 		case "hints":
@@ -414,9 +414,9 @@ func main() {
 			go func() {
 				src.SendLocation(src.SearchLocation(update.Message.Text), webToBot)
 			}()
-			src.IsWorkMu.Lock()
+			//src.IsWorkMu.Lock()
 			if src.IsWork {
-				src.IsWorkMu.Unlock()
+				//	src.IsWorkMu.Unlock()
 				// WTF symbol what I need ignore
 				if strings.ContainsAny(update.Message.Text, ":;/, '*+@#$%^&(){}[]|") {
 					break
@@ -424,7 +424,7 @@ func main() {
 				// check  codes
 				if strings.ContainsAny(strings.ToLower(update.Message.Text), "abcdefghijklmnopqrstuvwxyz0123456789!?") {
 					*isBonus = false
-					src.IsAnswerBlockMu.Lock()
+					//src.IsAnswerBlockMu.Lock()
 					if !src.IsAnswerBlock && (!strings.HasPrefix(update.Message.Text, "!") || !strings.HasPrefix(update.Message.Text, "?")) {
 						arrCodes := strings.Split(update.Message.Text, "\n")
 						for _, code := range arrCodes {
@@ -433,10 +433,10 @@ func main() {
 					} else {
 						_ = src.SendMessageTelegram(chatId, "Приём кодов <b>приостановлен</b>.\nДля возобновления наберите /resume", 0, bot)
 					}
-					src.IsAnswerBlockMu.Unlock()
+					//src.IsAnswerBlockMu.Unlock()
 				}
 			}
-			src.IsWorkMu.Unlock()
+			//	src.IsWorkMu.Unlock()
 		}
 	}
 }

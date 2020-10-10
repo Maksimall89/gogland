@@ -38,9 +38,9 @@ func WorkerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 				msgBot.ChannelMessage = "<b>Бот выключен.</b> \nДля перезапуска используйте /restart"
 				msgBot.MsgId = 0 // clear replay
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return "Bot stop"
 			}
@@ -51,9 +51,9 @@ func WorkerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 			if modelGame.Event == 6 || modelGame.Event == 17 {
 				msgBot.ChannelMessage = "&#128293;Игра завершена!\n<b>Вы молодцы, штаб ОГОНЬ!</b>"
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Game finished %s", game.URLGame)
 				return "FINISH GAME"
 			}
@@ -87,9 +87,9 @@ func WorkerJSON(client *http.Client, game *ConfigGameJSON, botToWeb chan Messeng
 						str += "игрока"
 					}
 					str += fmt.Sprintf("за %s\nДля возобновления наберите /resume\nЧтобы отправить бонусные коды введите: /b <code>код</code>\n\n", ConvertTimeSec(modelGame.Level.AttemtsPeriod))
-					IsAnswerBlockMu.Lock()
+					//IsAnswerBlockMu.Lock()
 					*isAnswerBlock = true
-					IsAnswerBlockMu.Unlock()
+					//IsAnswerBlockMu.Unlock()
 				}
 				// Сообщения
 				str += GetFirstMessages(modelGame.Level.Messages, *game)
@@ -169,9 +169,9 @@ func StartGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			if msg.ChannelMessage == "stop" {
 				msgBot.ChannelMessage = "Бот выключен. Мы даже не играли &#128546; \nДля перезапуска используйте /restart"
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Bot %s stop.\n", game.Gid)
 				return errors.New("Bot stop")
 			}
@@ -197,9 +197,9 @@ func StartGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 1:
 				msgBot.ChannelMessage = "&#9940;Игра не существует!"
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Bot %s stop  - case 0.\n", game.Gid)
 				return errors.New("ERROR")
 			case 5:
@@ -207,9 +207,9 @@ func StartGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 6:
 				msgBot.ChannelMessage = "Игра закончилась."
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 6.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 7:
@@ -231,9 +231,9 @@ func StartGame(client *http.Client, game *ConfigGameJSON, isWork *bool, botToWeb
 			case 17:
 				msgBot.ChannelMessage = "&#9940;Игра закончена!"
 				webToBot <- msgBot
-				IsWorkMu.Lock()
+				//IsWorkMu.Lock()
 				*isWork = false
-				IsWorkMu.Unlock()
+				//IsWorkMu.Unlock()
 				log.Printf("Bot %s stop - case 17.\n", game.Gid)
 				return errors.New("FINISHED")
 			case 19:
