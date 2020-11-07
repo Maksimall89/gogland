@@ -389,7 +389,6 @@ func TestEngineCompareBonuses(t *testing.T) {
 		{148017, "newss", 2, "sdfsdf", "werwerdfgwersdfsdf", true, false, 0, 0, 0},
 		{148018, "newss1", 3, "sdfsdf", "werwerdfgwersdfsdf", true, false, 0, 0, 0},
 	}
-
 	newBonus := []BonusesStruct{
 		{148016, "123e", 1, "sdfsdf", "werwerwersdfsdf", true, false, 0, 0, 0},
 		{148017, "newss", 2, "sdfsdf", "werwerdfgwersdfsdf", true, false, 300, 60, 0},
@@ -400,7 +399,7 @@ func TestEngineCompareBonuses(t *testing.T) {
 	arrBonuses := []string{
 		"&#9889;<b>Бонус появился</b> в движке.\n",
 		"&#10004;<b>Бонус</b> newss №2 доступен через 5&#8419; минут.\n&#10004;<b>Бонус</b> newss №2 исчезнет через 1&#8419; минуту.\n",
-		"&#11088;<b>Изменение в описании</b> бонуса newss1 №3:\nsdfsd342f\n",
+		"&#11088;<b>Изменение в описании</b> бонуса (№3) newss1:\nsdfsd342f\n",
 		"&#11088;<b>Изменение</b> в бонусе newss1 №3 (награда 0 секунд):\nwerwerdfg234wersdfsdf\n",
 		"&#11088;<b>Новый бонус</b> neddd2 №4\nsdf42f\nНаграда 0 секунд\n<b>Бонусная подсказка:</b>\nwersdf\n",
 	}

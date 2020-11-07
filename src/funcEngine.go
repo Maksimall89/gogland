@@ -124,7 +124,7 @@ func SendCode(client *http.Client, game *ConfigGameJSON, code string, isBonus *b
 	// Проверяем на дубль
 	for _, LevelInfo := range ModelState.Level.MixedActions {
 		if LevelInfo.Answer == code {
-			msgBot.ChannelMessage = "Код введён &#9745;<b>ПОВТОРНО</b>!"
+			msgBot.ChannelMessage = fmt.Sprintf("Код %s введён &#9745;<b>ПОВТОРНО</b>!", code)
 			webToBot <- msgBot
 			return
 		}
@@ -437,10 +437,10 @@ func CompareHelps(newHelps []HelpsStruct, oldHelps []HelpsStruct, gameConf Confi
 
 	for numberNew, helpNew := range newHelps {
 		// проверяем на длину, чтобы не выйти за пределы если добавили новую подсказку
-		if numberNew < len(oldHelps) {
+		if numberNew < len(oldHelps) && len(oldHelps) > 0 {
 			// старая подсказка
 			if newHelps[0].IsPenalty {
-				if oldHelps[numberNew].PenaltyComment != helpNew.PenaltyComment {
+				if oldHelps[numberNew].PenaltyComment != helpNew.PenaltyComment { // TODO out of range
 					msgBot.ChannelMessage = fmt.Sprintf("&#11088;<b>Изменение в описании</b> штрафной подсказки №%d:\n%s\n", helpNew.Number, ReplaceTag(helpNew.PenaltyComment, gameConf.SubUrl))
 					webToBot <- msgBot
 					//if text have location
@@ -540,7 +540,7 @@ func CompareBonuses(new []BonusesStruct, old []BonusesStruct, gameConf ConfigGam
 		if numberNew < len(old) {
 			// проверка на описание
 			if old[numberNew].Task != bonusNew.Task {
-				str = fmt.Sprintf("&#11088;<b>Изменение в описании</b> бонуса %s №%d:\n%s\n", bonusNew.Name, bonusNew.Number, ReplaceTag(bonusNew.Task, gameConf.SubUrl))
+				str = fmt.Sprintf("&#11088;<b>Изменение в описании</b> бонуса (№%d) %s:\n%s\n", bonusNew.Number, bonusNew.Name, ReplaceTag(bonusNew.Task, gameConf.SubUrl))
 				if bonusNew.SecondsLeft != 0 {
 					str += fmt.Sprintf("&#9200;Время на выполнение бонуса ограниченно: %s\n", ConvertTimeSec(bonusNew.SecondsLeft))
 				}

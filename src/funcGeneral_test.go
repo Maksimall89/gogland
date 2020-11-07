@@ -45,7 +45,8 @@ func TestGeneralSearchLocation(t *testing.T) {
 			в. д.HGЯO sdfsdsdasd <b>dfsfsdf</b>\n 40.167841<br/>58.410761 \n 
 			40,167845<br/>58,410765 //
 			fsdfsd 59°24'48.6756", 58°24'38.7396"
-			sdfsdgi :: 56°50.683, 53°11.776`
+			sdfsdgi :: 56°50.683, 53°11.776
+			sdfsd56.8576 53.3529sdfsdf`
 	locationMap := SearchLocation(text)
 
 	for i := 0; i == len(locationMap)/2; i++ {
@@ -76,6 +77,7 @@ func TestGeneralSendLocation(t *testing.T) {
 		{40.167845, 58.410765},
 		{59.413521, 58.410761},
 		{56.84471667, 53.19626667},
+		{56.8576, 53.3529},
 		{0.0, 0.0},
 	}
 
@@ -323,4 +325,7 @@ func initLocationTest(maps map[string]float64) {
 
 	maps["Latitude4"] = 56.84471667
 	maps["Longitude4"] = 53.19626667
+
+	maps["Latitude5"] = 56.8576
+	maps["Longitude5"] = 53.3529
 }

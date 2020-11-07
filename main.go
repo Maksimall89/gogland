@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gogland/help"
 	"gogland/src"
-	"gopkg.in/telegram-bot-api.v4"
+	tgbotapi "gopkg.in/telegram-bot-api.v4"
 	"log"
 	"math/rand"
 	"net/http"
@@ -76,7 +76,7 @@ func main() {
 
 	// read config file
 	var configuration src.ConfigBot
-	configuration.Init("config.json")
+	configuration.Init("src/config.json")
 
 	// configuration bot
 	bot, err := tgbotapi.NewBotAPI(configuration.TelegramBotToken)
@@ -436,7 +436,7 @@ func main() {
 					//src.IsAnswerBlockMu.Unlock()
 				}
 			}
-			//	src.IsWorkMu.Unlock()
+			//src.IsWorkMu.Unlock()
 		}
 	}
 }

@@ -2,7 +2,7 @@ package src
 
 import (
 	"fmt"
-	"gopkg.in/telegram-bot-api.v4"
+	tgbotapi "gopkg.in/telegram-bot-api.v4"
 	"log"
 	"math"
 	"net/url"
