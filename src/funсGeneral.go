@@ -305,7 +305,7 @@ func ReplaceTag(str string, subUrl string) string {
 	for _, coordinate := range strArr {
 		finalCoordinates := SearchLocation(coordinate)
 		for i := 0; i < len(finalCoordinates)/2; i++ {
-			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(` <code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>, `, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)]))
+			str = strings.ReplaceAll(str, coordinate, fmt.Sprintf(` <code>%f,%f</code> <a href="https://maps.google.com/?q=%f,%f">[G]</a> <a href="https://yandex.ru/maps/?source=serp_navig&text=%f,%f">[Y]</a>, `, finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i+1), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i+1), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i), 10)], finalCoordinates["Latitude"+strconv.FormatInt(int64(i+1), 10)]))
 		}
 	}
 	// Convert Links
