@@ -348,7 +348,7 @@ func main() {
 				if src.IsWork {
 					_ = src.SendMessageTelegram(chatId, "I work!", 0, bot)
 				} else {
-					_ = src.SendMessageTelegram(chatId, "You is't my own!", 0, bot)
+					_ = src.SendMessageTelegram(chatId, "You is't my own!\nFormat: <code>/start login,password,http://demo.en.cx/GameDetails.aspx?gid=1</code>", 0, bot)
 				}
 				//src.IsWorkMu.Unlock()
 				log.Printf("%s try to change config!", update.Message.From.UserName)
