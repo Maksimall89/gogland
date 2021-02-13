@@ -37,9 +37,9 @@ func TestHelpAssociations(t *testing.T) {
 	}
 
 	var tests = []testPair{
-		{"поле", "пшеница луг простор трава"},
+		{"поле", "пшеница"},
 		{"фывфывйуфывфы", strNotWords},
-		{"электростанция", "аэс тэс провода энергия"},
+		{"электростанция", "аэс"},
 	}
 
 	for _, pair := range tests {
